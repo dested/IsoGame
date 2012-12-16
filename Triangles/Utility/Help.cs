@@ -1,6 +1,7 @@
-﻿using System;
+using System;
+using System.Html;
 using jQueryApi;
-namespace Triangles
+namespace Triangles.Utility
 {
     public static class Help
     {
@@ -38,7 +39,7 @@ namespace Triangles
             var g2 = hex2Dec(_end.Substring(2, 4));
             var b2 = hex2Dec(_end.Substring(4, 6));
 
-            var pc = _percent / 100;
+            var pc = _percent / 100.0;
 
             var r = (int) Math.Floor(r1 + ( pc * ( r2 - r1 ) ) + .5);
             var g = (int) Math.Floor(g1 + ( pc * ( g2 - g1 ) ) + .5);
@@ -47,24 +48,33 @@ namespace Triangles
             return ( "#" + dec2Hex(r) + dec2Hex(g) + dec2Hex(b) );
         }
 
-        public static Pointer GetCursorPosition(jQueryEvent ev)
+        public static Pointer GetCursorPosition(Element element, jQueryEvent ev)
         {
             if (ev.Me().originalEvent && ev.Me().originalEvent.targetTouches && ev.Me().originalEvent.targetTouches.length > 0) ev = ev.Me().originalEvent.targetTouches[0];
 
+            var offsetX = 0;
+            var offsetY = 0;
+
+            if (element.OffsetParent != null) {
+                do {
+                    offsetX += element.OffsetLeft;
+                    offsetY += element.OffsetTop;
+                } while (( element = element.OffsetParent ) != null);
+            }
+
             if (ev.PageX.Me() != null && ev.PageY.Me() != null)
-                return new Pointer(ev.PageX, ev.PageY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
-            //if (ev.x != null && ev.y != null) return new { x: ev.x, y: ev.y };
-            return new Pointer(ev.ClientX, ev.ClientY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
+                return new Pointer(ev.PageX - offsetX, ev.PageY - offsetY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
+            return new Pointer(ev.ClientX - offsetX, ev.ClientY - offsetY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
         }
 
-/************************************************/
+        /************************************************/
 
-        public static string get_random_color()
+        public static string GetRandomColor()
         {
             return colors[(int) ( Math.Random() * ( colors.Length ) )];
         }
 
-        public static bool isPointInTriangle(Point _s, Point _a, Point _b, Point _c)
+        public static bool IsPointInTriangle(Point _s, Point _a, Point _b, Point _c)
         {
 
             {
@@ -77,22 +87,17 @@ namespace Triangles
             }
         }
 
-        public static void Log(object o)
+        public static void Log(object _cont)
         {
-            /*
-function log(_cont) {
-    var console = $("#txtConsole");
+            var console = jQuery.Select("#txtConsole");
 
-    var text = console.val();
+            var text = console.GetValue();
 
-    console.val(text + _cont + "\n");
+            console.Value(text + _cont + "\n");
 
-    console.scrollTop(
-                    console[0].scrollHeight - console.height()
-                );
-}
-
-*/
+            console.ScrollTop(
+                    console[0].ScrollHeight - console.GetHeight()
+                    );
         }
     }
 }

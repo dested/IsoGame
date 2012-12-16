@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-namespace Triangles
+using System.Runtime.CompilerServices;
+namespace Triangles.Utility
 {
     public class ExtraData<T, T2>
     {

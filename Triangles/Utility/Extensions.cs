@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-namespace Triangles
+namespace Triangles.Utility
 {
     public static class Extensions
     {

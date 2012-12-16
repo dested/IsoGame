@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Html.Media.Graphics;
 using System.Runtime.CompilerServices;
+using Triangles.Utility;
 namespace Triangles
 {
     public class Triangle
@@ -72,7 +73,7 @@ namespace Triangles
             if (UpsideDown) {
                 var x = ( X ) / 2.0;
                 int y = Y;
-                return Help.isPointInTriangle(new Point(_x, _y),
+                return Help.IsPointInTriangle(new Point(_x, _y),
                                               new Point((int) ( x * TriangleLength ), y * TriangleLength),
                                               new Point((int) ( x * TriangleLength + TriangleLength / 2 ), y * TriangleLength + TriangleLength),
                                               new Point((int) ( x * TriangleLength - TriangleLength / 2 ), y * TriangleLength + TriangleLength)
@@ -80,7 +81,7 @@ namespace Triangles
             } else {
                 var x = ( X - 1 ) / 2.0;
                 int y = Y;
-                return Help.isPointInTriangle(new Point(_x, _y),
+                return Help.IsPointInTriangle(new Point(_x, _y),
                                               new Point((int) ( x * TriangleLength + TriangleLength / 2 ), y * TriangleLength + TriangleLength),
                                               new Point((int) ( x * TriangleLength ), y * TriangleLength),
                                               new Point((int) ( x * TriangleLength + TriangleLength ), y * TriangleLength));
@@ -144,7 +145,7 @@ namespace Triangles
                 transitioning = 0;
             }
 
-            if (transitioning > 0) return Help.getColor(Color, transitionToColor, transitioning += 10);
+            if (transitioning > 0) return Help.getColor(Color, transitionToColor, transitioning += 5);
 
             return Color;
         }
@@ -179,12 +180,27 @@ namespace Triangles
         {
             _context.Save();
             _context.BeginPath();
-            _context.StrokeStyle = Neighbors ? "gold" : Selected ? "green" : Glow ? "gold" : "black";
-            _context.LineWidth = Neighbors ? 9 : Selected ? 7 : Glow ? 5 : 3;
-            if (HighlightedNeighbors) {
-                _context.StrokeStyle = "#352B88";
-                _context.LineWidth = 12;
+            //worst code
+            if (Neighbors) _context.StrokeStyle = "#0C00CC";
+            else {
+                if (Selected) _context.StrokeStyle = "#FAFAFA";
+                else {
+                    if (Glow) _context.StrokeStyle = "gold";
+                    else _context.StrokeStyle = "black";
+                }
             }
+            if (Neighbors) _context.LineWidth = 9;
+            else {
+                if (Selected) _context.LineWidth = 7;
+                else {
+                    if (Glow) _context.LineWidth = 5;
+                    else if (HighlightedNeighbors) {
+                        _context.StrokeStyle = "#FcFcFc";
+                        _context.LineWidth = 6;
+                    } else _context.LineWidth = 3;
+                }
+            }
+
             _context.FillStyle = GetCurrentColor();
             if (UpsideDown) {
                 var x = ( X ) / 2.0;
@@ -217,14 +233,31 @@ namespace Triangles
 
             _context.Fill();
 
-            _context.Stroke();
+            if (Glow) {
+                _context.LineWidth = 8;
+                if (transitioning > 0) _context.StrokeStyle = "white";
+                else _context.StrokeStyle = "black";
+                _context.Stroke();
+                _context.LineWidth = 4;
+                _context.StrokeStyle = "gold";
+                _context.Stroke();
+            } else
+                _context.Stroke();
 
-            if (Neighbors || HighlightedNeighbors) {
+            if (( Neighbors || HighlightedNeighbors ) && !Glow) {
                 _context.LineWidth = 2;
                 _context.StrokeStyle = "#345782";
                 _context.Stroke();
             }
+            if (Neighbors) {
+                _context.StrokeStyle = "black";
+                _context.LineWidth = 9;
+                _context.Stroke();
 
+                _context.StrokeStyle = "white";
+                _context.LineWidth = 4;
+                _context.Stroke();
+            }
             _context.Restore();
         }
     }

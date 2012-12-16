@@ -1,8 +1,8 @@
-﻿using System.Html;
+using System.Html;
 using System.Html.Media.Graphics;
 using System.Runtime.CompilerServices;
 using jQueryApi;
-namespace Triangles
+namespace Triangles.Utility
 {
     public class CanvasInformation
     {

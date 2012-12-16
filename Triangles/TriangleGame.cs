@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Html;
 using System.Html.Media.Graphics;
+using Triangles.Utility;
 namespace Triangles
 {
     internal class TriangleGame
@@ -21,56 +22,49 @@ namespace Triangles
 
             myCanvas.Canvas.AddEventListener("contextmenu", (evt) => { evt.PreventDefault(); }, false);
 
-            myCanvas.JCanvas.MouseDown(_e => {
-                                           var pointer = Help.GetCursorPosition(_e);
+            myCanvas.JCanvas.MouseDown(_ae => {
+                                           var pointer = Help.GetCursorPosition(myCanvas.Canvas, _ae);
 
                                            Triangle selected = null;
 
-                                           switch (_e.Which) {
-                                               case 1:
-                                                   for (int l = 0; l < myAllTriangles.Count; l++) {
-                                                       myAllTriangles[l].Selected = myAllTriangles[l].HighlightedNeighbors = myAllTriangles[l].Neighbors = false;
-                                                       if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) ( selected = myAllTriangles[l] ).Selected = true;
+                                           if (pointer.Right) {
+                                               var neighbors = new List<Triangle>();
+
+                                               for (var l = 0; l < myAllTriangles.Count; l++) {
+                                                   myAllTriangles[l].Neighbors = false;
+                                                   if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) {
+                                                       if (!myAllTriangles[l].Neighbors)
+                                                           neighbors = myAllTriangles[l].getLikeNeighbors(myTriangles);
                                                    }
+                                               }
 
-                                                   if (selected != null) {
-                                                       if (myFirstSelected == null || !myFirstSelected.isNeighbor(selected.X, selected.Y)) {
-                                                           myFirstSelected = selected;
+                                               for (var i = 0; i < neighbors.Count; i++) {
+                                                   neighbors[i].Neighbors = true;
+                                               }
+                                           } else {
+                                               for (int l = 0; l < myAllTriangles.Count; l++) {
+                                                   myAllTriangles[l].Selected = myAllTriangles[l].HighlightedNeighbors = myAllTriangles[l].Neighbors = false;
+                                                   if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) ( selected = myAllTriangles[l] ).Selected = true;
+                                               }
 
-                                                           selected.HighlightNeighbors(myTriangles);
-                                                       } else {
-                                                           var c2 = myFirstSelected.Color;
-                                                           myFirstSelected.TransitionTo(selected.Color);
-                                                           selected.TransitionTo(c2);
+                                               if (selected != null) {
+                                                   if (myFirstSelected == null || !myFirstSelected.isNeighbor(selected.X, selected.Y)) {
+                                                       myFirstSelected = selected;
 
-                                                           selected.Selected = false;
-                                                           myFirstSelected = null;
-                                                       }
+                                                       selected.HighlightNeighbors(myTriangles);
+                                                   } else {
+                                                       var c2 = myFirstSelected.Color;
+                                                       myFirstSelected.TransitionTo(selected.Color);
+                                                       selected.TransitionTo(c2);
+
+                                                       selected.Selected = false;
+                                                       myFirstSelected = null;
                                                    }
-
-                                                   break;
-                                               case 3:
-                                                   var neighbors = new List<Triangle>();
-
-                                                   for (var l = 0; l < myAllTriangles.Count; l++) {
-                                                       myAllTriangles[l].Neighbors = false;
-                                                       if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) neighbors = myAllTriangles[l].getLikeNeighbors(myTriangles);
-                                                   }
-
-                                                   for (var i = 0; i < neighbors.Count; i++) {
-                                                       neighbors[i].Neighbors = true;
-                                                   }
-
-                                                   break;
-                                               case 2:
-                                                   //middle click
-                                                   break;
-                                               default:
-                                                   break;
+                                               }
                                            }
                                        });
-            myCanvas.JCanvas.MouseMove(_e => {
-                                           var pointer = Help.GetCursorPosition(_e);
+            myCanvas.JCanvas.MouseMove(_ae => {
+                                           var pointer = Help.GetCursorPosition(myCanvas.Canvas, _ae);
 
                                            for (var l = 0; l < myAllTriangles.Count; l++) {
                                                myAllTriangles[l].Glow = false;
@@ -99,7 +93,7 @@ namespace Triangles
                     var off = ( ( ( y % 2 ) == 0 ) ? 1 : 0 );
                     var off2 = ( ( x + off ) % 2 ) == 0;
 
-                    var tri = new Triangle(x, y, off2, Help.get_random_color());
+                    var tri = new Triangle(x, y, off2, Help.GetRandomColor());
 
                     myTriangles[x][y] = tri;
 
@@ -120,10 +114,15 @@ namespace Triangles
 
             var specials = new List<Triangle>();
             var specials2 = new List<Triangle>();
+            var specials3 = new List<Triangle>();
 
             for (int l = 0; l < myAllTriangles.Count; l++) {
-                if (myAllTriangles[l].Selected || myAllTriangles[l].Glow || myAllTriangles[l].Neighbors) specials.Add(myAllTriangles[l]);
-                else if (myAllTriangles[l].HighlightedNeighbors) specials2.Add(myAllTriangles[l]);
+                if (myAllTriangles[l].Selected || myAllTriangles[l].Neighbors)
+                    specials.Add(myAllTriangles[l]);
+                else if (myAllTriangles[l].Glow) specials3.Add(myAllTriangles[l]);
+                if (myAllTriangles[l].HighlightedNeighbors)
+                    specials2.Add(myAllTriangles[l]);
+
                 else myAllTriangles[l].Draw(myCanvas.Context);
             }
 
@@ -133,6 +132,9 @@ namespace Triangles
             }
             for (int l = 0; l < specials.Count; l++) {
                 specials[l].Draw(myCanvas.Context);
+            }
+            for (int l = 0; l < specials3.Count; l++) {
+                specials3[l].Draw(myCanvas.Context);
             }
 
             myCanvas.Context.Restore();

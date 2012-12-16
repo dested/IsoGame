@@ -1,5 +1,5 @@
-﻿using System;
-namespace Triangles
+using System;
+namespace Triangles.Utility
 {
     [Serializable]
     public class Point
