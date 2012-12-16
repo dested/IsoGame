@@ -19,6 +19,13 @@
         });
 
     </script>
+    <style>
+        body {
+            -webkit-user-select:none;
+-moz-user-select:none;
+        }
+        
+    </style>
 </head>
 <body>
     <center>

@@ -33,7 +33,10 @@
 
 
                 if (selected) {
-                    if (firstSelected) { 
+
+
+
+                    if (firstSelected) {
                         if (!firstSelected.isNeighbor(selected.x, selected.y)) {
                             firstSelected = undefined;
                             return;
@@ -47,6 +50,9 @@
                         firstSelected = undefined;
                     } else {
                         firstSelected = selected;
+
+                        selected.highlightNeighbors(triangles);
+
                     }
 
                 }
@@ -136,7 +142,7 @@
         var specials = [];
         var l;
         for (l = 0; l < allTriangles.length; l++) {
-            if (allTriangles[l].selected || allTriangles[l].glow || allTriangles[l].neighbors) {
+            if (allTriangles[l].selected || allTriangles[l].glow || allTriangles[l].neighbors || allTriangles[l].highlightedNeighbors) {
                 specials.push(allTriangles[l]);
             } else {
                 allTriangles[l].draw(ctx);

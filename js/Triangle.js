@@ -8,6 +8,7 @@ function Triangle(_x, _y, _upsideDown, _color) {
     this.selected = false;
     this.neighbors = false;
     this.glow = false;
+    this.highlightedNeighbors = false;
     return this;
 }
 
@@ -148,6 +149,32 @@ Triangle.prototype.getCurrentColor = function () {
 
 };
 
+Triangle.prototype.highlightNeighbors = function (_board) {
+    var neighs;
+    if (this.upsideDown) {
+        neighs = Triangle.UpsideDownNeighbors;
+    } else {
+        neighs = Triangle.Neighbors;
+    }
+
+    for (var j = 0; j < _board.length; j++) {
+        for (var k = 0; k < _board[j].length; k++) {
+            _board[j][k].highlightedNeighbors = false;
+        }
+    }
+
+    for (var i = 0; i < neighs.length; i++) {
+
+        var cX = this.x + neighs[i].x;
+        var cY = this.y + neighs[i].y;
+
+        if (cX >= 0 && cX < _board.length && cY >= 0 && cY < _board[0].length) {
+            _board[cX][cY].highlightedNeighbors = true;
+        }
+
+    }
+};
+
 Triangle.prototype.transitionTo = function (_toColor) {
     this.transitionToColor = _toColor;
     this.transitioning = 1;
@@ -158,7 +185,10 @@ Triangle.prototype.draw = function (_context) {
     _context.beginPath();
     _context.strokeStyle = this.neighbors ? 'gold' : this.selected ? 'green' : this.glow ? 'gold' : 'black';
     _context.lineWidth = this.neighbors ? 9 : this.selected ? 7 : this.glow ? 5 : 3;
-
+    if (this.highlightedNeighbors) {
+        _context.strokeStyle = '#352B88';
+        _context.lineWidth = 12;
+    }
     _context.fillStyle = this.getCurrentColor();
     var x;
     var y;
@@ -199,7 +229,7 @@ Triangle.prototype.draw = function (_context) {
 
     _context.stroke();
 
-    if (this.neighbors) {
+    if (this.neighbors || this.highlightedNeighbors) {
         _context.lineWidth = 2;
         _context.strokeStyle = '#345782';
         _context.stroke();
