@@ -6,7 +6,7 @@ namespace Triangles
 {
     public class Triangle
     {
-        private const int TriangleLength = 60;
+        private const int TriangleLength = 100;
         private static readonly Point[] UpsideDownNeighbors = new Point[] {
                                                                                   new Point(-1, +0),
                                                                                   new Point(+1, +0),
@@ -35,6 +35,7 @@ namespace Triangles
                                                                           new Point(-2, -1),
                                                                           new Point(+2, -1)
                                                                   };
+        private int spacing = 32;
         private string transitionToColor;
         private int transitioning;
         [IntrinsicProperty]
@@ -73,18 +74,23 @@ namespace Triangles
             if (UpsideDown) {
                 var x = ( X ) / 2.0;
                 int y = Y;
+                var __x = x * TriangleLength + x * spacing - spacing / 2.0;
+                var __y = y * TriangleLength + y * spacing / 2;
+
                 return Help.IsPointInTriangle(new Point(_x, _y),
-                                              new Point((int) ( x * TriangleLength ), y * TriangleLength),
-                                              new Point((int) ( x * TriangleLength + TriangleLength / 2 ), y * TriangleLength + TriangleLength),
-                                              new Point((int) ( x * TriangleLength - TriangleLength / 2 ), y * TriangleLength + TriangleLength)
+                                              new Point((int) __x, __y),
+                                              new Point((int) ( __x + TriangleLength / 2 ), __y + TriangleLength),
+                                              new Point((int) ( __x - TriangleLength / 2 ), __y + TriangleLength)
                         );
             } else {
                 var x = ( X - 1 ) / 2.0;
                 int y = Y;
+                var __x = x * TriangleLength + x * spacing;
+                var __y = y * TriangleLength + y * spacing / 2;
                 return Help.IsPointInTriangle(new Point(_x, _y),
-                                              new Point((int) ( x * TriangleLength + TriangleLength / 2 ), y * TriangleLength + TriangleLength),
-                                              new Point((int) ( x * TriangleLength ), y * TriangleLength),
-                                              new Point((int) ( x * TriangleLength + TriangleLength ), y * TriangleLength));
+                                              new Point((int) ( __x + TriangleLength / 2 ), __y + TriangleLength),
+                                              new Point((int) __x, __y),
+                                              new Point((int) ( __x + TriangleLength ), __y));
             }
         }
 
@@ -197,7 +203,7 @@ namespace Triangles
                     else if (HighlightedNeighbors) {
                         _context.StrokeStyle = "#FcFcFc";
                         _context.LineWidth = 6;
-                    } else _context.LineWidth = 3;
+                    } else _context.LineWidth = 2;
                 }
             }
 
@@ -206,7 +212,7 @@ namespace Triangles
                 var x = ( X ) / 2.0;
                 var y = Y;
 
-                _context.Translate(x * TriangleLength, y * TriangleLength);
+                _context.Translate(x * TriangleLength + x * spacing - spacing / 2.0, y * TriangleLength + y * spacing/2);
 
                 if (Selected) {
                     //  ctx.rotate((cur+=3)*Math.PI/180); 
@@ -219,7 +225,9 @@ namespace Triangles
             } else {
                 var x = ( X - 1 ) / 2.0;
                 var y = Y;
-                _context.Translate(x * TriangleLength, y * TriangleLength);
+
+                _context.Translate(x * TriangleLength + x * spacing, y * TriangleLength + y * spacing/2);
+
 
                 if (Selected) {
                     //  ctx.rotate((cur+=3)*Math.PI/180); 
@@ -229,11 +237,15 @@ namespace Triangles
                 _context.LineTo(TriangleLength, 0);
                 _context.LineTo(TriangleLength / 2, TriangleLength);
                 _context.LineTo(0, 0);
+
             }
 
             _context.Fill();
 
-            if (Glow) {
+
+            _context.LineWidth *= 2;
+            if (Glow)
+            {
                 _context.LineWidth = 8;
                 if (transitioning > 0) _context.StrokeStyle = "white";
                 else _context.StrokeStyle = "black";
@@ -241,7 +253,15 @@ namespace Triangles
                 _context.LineWidth = 4;
                 _context.StrokeStyle = "gold";
                 _context.Stroke();
-            } else
+            }
+            else if (Selected)
+            {
+                _context.Stroke();
+                _context.LineWidth = 4;
+                _context.StrokeStyle = "black";
+                _context.Stroke();
+            }
+            else
                 _context.Stroke();
 
             if (( Neighbors || HighlightedNeighbors ) && !Glow) {

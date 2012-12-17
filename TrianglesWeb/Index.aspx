@@ -12,11 +12,12 @@
             -webkit-user-select: none;
             -moz-user-select: none;
         }
+        html, body {margin: 0;padding: 0;}body {height: 100%;position: relative;width: 100%;}
     </style>
 </head>
 <body>
     <center>
-        <canvas id="cnvGameBoard" width="700" height="700"></canvas>
+        <canvas id="cnvGameBoard"></canvas> 
         <br />
         <textarea id="txtConsole" cols="75" rows="10" style="display: none;"></textarea>
     </center>

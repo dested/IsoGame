@@ -6,8 +6,8 @@ namespace Triangles
 {
     internal class TriangleGame
     {
-        public static Point Offset = new Point(50, 20);
-        public static Point Size = new Point(700, 700);
+        public static Point Offset = new Point(160, 70);
+        public static Point Size = new Point(1100, 850);
         private List<Triangle> myAllTriangles;
         private CanvasInformation myCanvas;
         private Triangle myFirstSelected;
@@ -15,7 +15,7 @@ namespace Triangles
 
         public TriangleGame()
         {
-            myCanvas = CanvasInformation.Create((CanvasElement) Document.GetElementById("cnvGameBoard"), 700, 700);
+            myCanvas = CanvasInformation.Create((CanvasElement) Document.GetElementById("cnvGameBoard"), Size.X, Size.Y);
 
             myCanvas.Context.LineCap = LineCap.Round;
             myCanvas.Context.LineJoin = LineJoin.Round;
@@ -79,8 +79,8 @@ namespace Triangles
         private void init()
         {
             myAllTriangles = new List<Triangle>();
-            var boardWidth = 15;
-            var boardHeight = 10;
+            var boardWidth = 13;
+            var boardHeight = 6;
 
             myTriangles = new Triangle[boardWidth][];
 
@@ -106,7 +106,7 @@ namespace Triangles
         {
             myCanvas.Context.Save();
             myCanvas.Context.Save();
-            myCanvas.Context.FillStyle = "white";
+            myCanvas.Context.FillStyle = "#222222";
             myCanvas.Context.FillRect(0, 0, Size.X, Size.Y);
             myCanvas.Context.Restore();
 
