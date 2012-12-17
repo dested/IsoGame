@@ -7,37 +7,37 @@ namespace Triangles
     public class Triangle
     {
         private const int TriangleLength = 100;
-        private static readonly Point[] UpsideDownNeighbors = new Point[] {
-                                                                                  new Point(-1, +0),
-                                                                                  new Point(+1, +0),
-                                                                                  new Point(-2, +0),
-                                                                                  new Point(+2, +0),
-                                                                                  new Point(+0, -1),
-                                                                                  new Point(-1, -1),
-                                                                                  new Point(+1, -1),
-                                                                                  new Point(+0, +1),
-                                                                                  new Point(-1, +1),
-                                                                                  new Point(+1, +1),
-                                                                                  new Point(-2, +1),
-                                                                                  new Point(+2, +1)
-                                                                          };
-        private static Point[] RightSideUpNeighbors = new Point[] {
-                                                                          new Point(-1, +0),
-                                                                          new Point(+1, +0),
-                                                                          new Point(-2, +0),
-                                                                          new Point(+2, +0),
-                                                                          new Point(+0, +1),
-                                                                          new Point(-1, +1),
-                                                                          new Point(+1, +1),
-                                                                          new Point(+0, -1),
-                                                                          new Point(-1, -1),
-                                                                          new Point(+1, -1),
-                                                                          new Point(-2, -1),
-                                                                          new Point(+2, -1)
-                                                                  };
+        private static readonly Point[] PointUpNeighbors = new Point[] {
+                                                                               new Point(-1, +0),
+                                                                               new Point(+1, +0),
+                                                                               new Point(-2, +0),
+                                                                               new Point(+2, +0),
+                                                                               new Point(+0, -1),
+                                                                               new Point(-1, -1),
+                                                                               new Point(+1, -1),
+                                                                               new Point(+0, +1),
+                                                                               new Point(-1, +1),
+                                                                               new Point(+1, +1),
+                                                                               new Point(-2, +1),
+                                                                               new Point(+2, +1)
+                                                                       };
+        private static Point[] PointDownNeighbors = new Point[] {
+                                                                        new Point(-1, +0),
+                                                                        new Point(+1, +0),
+                                                                        new Point(-2, +0),
+                                                                        new Point(+2, +0),
+                                                                        new Point(+0, +1),
+                                                                        new Point(-1, +1),
+                                                                        new Point(+1, +1),
+                                                                        new Point(+0, -1),
+                                                                        new Point(-1, -1),
+                                                                        new Point(+1, -1),
+                                                                        new Point(-2, -1),
+                                                                        new Point(+2, -1)
+                                                                };
         private int spacing = 32;
         private string transitionToColor;
-        private int transitioning;
+        public int transitioning;
         [IntrinsicProperty]
         public bool Selected { get; set; }
         [IntrinsicProperty]
@@ -49,17 +49,17 @@ namespace Triangles
         [IntrinsicProperty]
         public string Color { get; set; }
         [IntrinsicProperty]
-        public bool UpsideDown { get; set; }
+        public bool PointUp { get; set; }
         [IntrinsicProperty]
         public int Y { get; set; }
         [IntrinsicProperty]
         public int X { get; set; }
 
-        public Triangle(int _x, int _y, bool upsideDown, string _color)
+        public Triangle(int _x, int _y, bool pointUp, string _color)
         {
             X = _x;
             Y = _y;
-            UpsideDown = upsideDown;
+            PointUp = pointUp;
             Color = _color;
             Selected = false;
             Neighbors = false;
@@ -71,7 +71,7 @@ namespace Triangles
         {
             _x -= TriangleGame.Offset.X;
             _y -= TriangleGame.Offset.Y;
-            if (UpsideDown) {
+            if (PointUp) {
                 var x = ( X ) / 2.0;
                 int y = Y;
                 var __x = x * TriangleLength + x * spacing - spacing / 2.0;
@@ -107,7 +107,7 @@ namespace Triangles
         public bool isNeighbor(int _x, int _y)
         {
             Point[] neighs;
-            neighs = UpsideDown ? UpsideDownNeighbors : RightSideUpNeighbors;
+            neighs = PointUp ? PointUpNeighbors : PointDownNeighbors;
 
             for (var i = 0; i < neighs.Length; i++) {
                 if (X + neighs[i].X == _x && Y + neighs[i].Y == _y) return true;
@@ -127,15 +127,15 @@ namespace Triangles
                 if (_board[_x][_y].Color == _color) items.Add(_board[_x][_y]);
                 else return items;
 
-                if (_board[_x][_y].UpsideDown) {
-                    for (var l = 0; l < UpsideDownNeighbors.Length; l++) {
-                        var neighs = UpsideDownNeighbors[l];
+                if (_board[_x][_y].PointUp) {
+                    for (var l = 0; l < PointUpNeighbors.Length; l++) {
+                        var neighs = PointUpNeighbors[l];
 
                         items.AddRange(startLikeNeighbors(_board, _x + neighs.X, _y + neighs.Y, _color, _hitMap));
                     }
                 } else {
-                    for (var l = 0; l < RightSideUpNeighbors.Length; l++) {
-                        var neighs = RightSideUpNeighbors[l];
+                    for (var l = 0; l < PointDownNeighbors.Length; l++) {
+                        var neighs = PointDownNeighbors[l];
                         items.AddRange(startLikeNeighbors(_board, _x + neighs.X, _y + neighs.Y, _color, _hitMap));
                     }
                 }
@@ -159,8 +159,8 @@ namespace Triangles
         public void HighlightNeighbors(Triangle[][] _board)
         {
             Point[] neighs;
-            if (UpsideDown) neighs = UpsideDownNeighbors;
-            else neighs = RightSideUpNeighbors;
+            if (PointUp) neighs = PointUpNeighbors;
+            else neighs = PointDownNeighbors;
 
             for (var j = 0; j < _board.Length; j++) {
                 for (var k = 0; k < _board[j].Length; k++) {
@@ -174,6 +174,25 @@ namespace Triangles
 
                 if (cX >= 0 && cX < _board.Length && cY >= 0 && cY < _board[0].Length) _board[cX][cY].HighlightedNeighbors = true;
             }
+        }
+
+        public List<Triangle> GetNeighbors(Triangle[][] _board)
+        {
+            Point[] neighs;
+            if (PointUp) neighs = PointUpNeighbors;
+            else neighs = PointDownNeighbors;
+            List<Triangle> result = new List<Triangle>();
+
+            for (var i = 0; i < neighs.Length; i++) {
+                var cX = X + neighs[i].X;
+                var cY = Y + neighs[i].Y;
+
+                if (cX >= 0 && cX < _board.Length && cY >= 0 && cY < _board[0].Length) {
+                    if (_board[cX][cY].Color != null)
+                        result.Add(_board[cX][cY]);
+                }
+            }
+            return result;
         }
 
         public void TransitionTo(string _toColor)
@@ -208,11 +227,11 @@ namespace Triangles
             }
 
             _context.FillStyle = GetCurrentColor();
-            if (UpsideDown) {
+            if (PointUp) {
                 var x = ( X ) / 2.0;
                 var y = Y;
 
-                _context.Translate(x * TriangleLength + x * spacing - spacing / 2.0, y * TriangleLength + y * spacing/2);
+                _context.Translate(x * TriangleLength + x * spacing - spacing / 2.0, y * TriangleLength + y * spacing / 2);
 
                 if (Selected) {
                     //  ctx.rotate((cur+=3)*Math.PI/180); 
@@ -226,8 +245,7 @@ namespace Triangles
                 var x = ( X - 1 ) / 2.0;
                 var y = Y;
 
-                _context.Translate(x * TriangleLength + x * spacing, y * TriangleLength + y * spacing/2);
-
+                _context.Translate(x * TriangleLength + x * spacing, y * TriangleLength + y * spacing / 2);
 
                 if (Selected) {
                     //  ctx.rotate((cur+=3)*Math.PI/180); 
@@ -237,15 +255,12 @@ namespace Triangles
                 _context.LineTo(TriangleLength, 0);
                 _context.LineTo(TriangleLength / 2, TriangleLength);
                 _context.LineTo(0, 0);
-
             }
 
             _context.Fill();
 
-
             _context.LineWidth *= 2;
-            if (Glow)
-            {
+            if (Glow) {
                 _context.LineWidth = 8;
                 if (transitioning > 0) _context.StrokeStyle = "white";
                 else _context.StrokeStyle = "black";
@@ -253,15 +268,12 @@ namespace Triangles
                 _context.LineWidth = 4;
                 _context.StrokeStyle = "gold";
                 _context.Stroke();
-            }
-            else if (Selected)
-            {
+            } else if (Selected) {
                 _context.Stroke();
                 _context.LineWidth = 4;
                 _context.StrokeStyle = "black";
                 _context.Stroke();
-            }
-            else
+            } else
                 _context.Stroke();
 
             if (( Neighbors || HighlightedNeighbors ) && !Glow) {
@@ -279,6 +291,11 @@ namespace Triangles
                 _context.Stroke();
             }
             _context.Restore();
+        }
+
+        public void Pop()
+        {
+            Color = null;
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 namespace Triangles.Utility
@@ -22,6 +23,39 @@ namespace Triangles.Utility
         public static T[] Array<T>(this List<T> o)
         {
             return new T[0];
+        }
+
+        public static List<T> TakeRandom<T>(this List<T> items)
+        {
+            var ls = new List<T>(items);
+
+            ls.Sort((a, b) => { return (int) ( Math.Round(Math.Random()) - 0.5 ); });
+            return ls;
+/*
+/*
+            foreach (var item in items) {
+                yield return item;
+            }
+            yield break;
+#1#
+
+            ;
+            List<bool> used=new List<bool>();
+            for (int i = 0; i < items.Count; i++) {
+                used[i] = false;
+            }
+
+            int usedCount = 0;
+
+            while (usedCount!=items.Count-1) {
+                var cur = ( (int) Math.Random() * items.Count );
+                if (!used[cur]) {
+                    used[cur] = true;
+                    usedCount++;
+                    yield return items[cur];
+                }
+            }
+*/
         }
 
         public static ExtraData<T, T2> WithData<T, T2>(this T item, T2 data)

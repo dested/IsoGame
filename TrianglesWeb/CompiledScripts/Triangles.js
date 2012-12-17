@@ -10,61 +10,81 @@ $Triangles_$Program.$main = function() {
 ////////////////////////////////////////////////////////////////////////////////
 // Triangles.TriangleGame
 var $Triangles_$TriangleGame = function() {
-	this.$myAllTriangles = null;
+	this.$boardHeight = 6;
+	this.$boardWidth = 13;
+	this.$drawTick = 0;
 	this.$myCanvas = null;
 	this.$myFirstSelected = null;
-	this.$myTriangles = null;
+	this.$myTriangleGrid = null;
+	this.$myTriangleList = null;
 	this.$myCanvas = $Triangles_Utility_CanvasInformation.create$1(document.getElementById('cnvGameBoard'), $Triangles_$TriangleGame.$size.x, $Triangles_$TriangleGame.$size.y);
 	this.$myCanvas.context.lineCap = 'round';
 	this.$myCanvas.context.lineJoin = 'round';
 	this.$myCanvas.canvas.addEventListener('contextmenu', function(evt) {
 		evt.preventDefault();
 	}, false);
-	this.$myCanvas.jCanvas.mousedown(Function.mkdel(this, function(_ae) {
-		var pointer = $Triangles_Utility_Help.getCursorPosition(this.$myCanvas.canvas, _ae);
+	this.$myCanvas.jCanvas.mousedown(Function.mkdel(this, function(e) {
+		var pointer = $Triangles_Utility_Help.getCursorPosition(this.$myCanvas.canvas, e);
 		var selected = null;
-		if (pointer.right) {
-			var neighbors = [];
-			for (var l = 0; l < this.$myAllTriangles.length; l++) {
-				this.$myAllTriangles[l].neighbors = false;
-				if (this.$myAllTriangles[l].inBounds(pointer.x, pointer.y)) {
-					if (!this.$myAllTriangles[l].neighbors) {
-						neighbors = this.$myAllTriangles[l].getLikeNeighbors(this.$myTriangles);
+		if (!pointer.right) {
+			for (var l = 0; l < this.$myTriangleList.length; l++) {
+				this.$myTriangleList[l].highlightedNeighbors = false;
+				if (this.$myTriangleList[l].inBounds(pointer.x, pointer.y)) {
+					if (this.$myTriangleList[l].selected === true) {
+						this.$myFirstSelected = null;
+						this.$myTriangleList[l].selected = false;
+						continue;
+					}
+					if (this.$myTriangleList[l].neighbors) {
+						this.$popNeighborTriangles(this.$myTriangleList[l]);
+					}
+					else {
+						(selected = this.$myTriangleList[l]).selected = true;
 					}
 				}
+				else {
+					this.$myTriangleList[l].selected = false;
+				}
+				this.$myTriangleList[l].neighbors = false;
+			}
+			if (ss.isValue(selected)) {
+				if (ss.isValue(selected.color)) {
+					if (ss.isNullOrUndefined(this.$myFirstSelected) || !this.$myFirstSelected.isNeighbor(selected.x, selected.y)) {
+						this.$myFirstSelected = selected;
+						selected.highlightNeighbors(this.$myTriangleGrid);
+					}
+					else {
+						var c2 = this.$myFirstSelected.color;
+						this.$myFirstSelected.transitionTo(selected.color);
+						selected.transitionTo(c2);
+						selected.selected = false;
+						this.$myFirstSelected = null;
+					}
+				}
+			}
+		}
+		else {
+			var neighbors = [];
+			this.$myFirstSelected = null;
+			for (var l1 = 0; l1 < this.$myTriangleList.length; l1++) {
+				if (this.$myTriangleList[l1].inBounds(pointer.x, pointer.y)) {
+					if (!this.$myTriangleList[l1].neighbors) {
+						neighbors = this.$myTriangleList[l1].getLikeNeighbors(this.$myTriangleGrid);
+					}
+				}
+				this.$myTriangleList[l1].selected = this.$myTriangleList[l1].highlightedNeighbors = this.$myTriangleList[l1].neighbors = false;
 			}
 			for (var i = 0; i < neighbors.length; i++) {
 				neighbors[i].neighbors = true;
 			}
 		}
-		else {
-			for (var l1 = 0; l1 < this.$myAllTriangles.length; l1++) {
-				this.$myAllTriangles[l1].selected = this.$myAllTriangles[l1].highlightedNeighbors = this.$myAllTriangles[l1].neighbors = false;
-				if (this.$myAllTriangles[l1].inBounds(pointer.x, pointer.y)) {
-					(selected = this.$myAllTriangles[l1]).selected = true;
-				}
-			}
-			if (ss.isValue(selected)) {
-				if (ss.isNullOrUndefined(this.$myFirstSelected) || !this.$myFirstSelected.isNeighbor(selected.x, selected.y)) {
-					this.$myFirstSelected = selected;
-					selected.highlightNeighbors(this.$myTriangles);
-				}
-				else {
-					var c2 = this.$myFirstSelected.color;
-					this.$myFirstSelected.transitionTo(selected.color);
-					selected.transitionTo(c2);
-					selected.selected = false;
-					this.$myFirstSelected = null;
-				}
-			}
-		}
 	}));
-	this.$myCanvas.jCanvas.mousemove(Function.mkdel(this, function(_ae1) {
-		var pointer1 = $Triangles_Utility_Help.getCursorPosition(this.$myCanvas.canvas, _ae1);
-		for (var l2 = 0; l2 < this.$myAllTriangles.length; l2++) {
-			this.$myAllTriangles[l2].glow = false;
-			if (this.$myAllTriangles[l2].inBounds(pointer1.x, pointer1.y)) {
-				this.$myAllTriangles[l2].glow = true;
+	this.$myCanvas.jCanvas.mousemove(Function.mkdel(this, function(e1) {
+		var pointer1 = $Triangles_Utility_Help.getCursorPosition(this.$myCanvas.canvas, e1);
+		for (var l2 = 0; l2 < this.$myTriangleList.length; l2++) {
+			this.$myTriangleList[l2].glow = false;
+			if (this.$myTriangleList[l2].inBounds(pointer1.x, pointer1.y)) {
+				this.$myTriangleList[l2].glow = true;
 			}
 		}
 	}));
@@ -72,46 +92,119 @@ var $Triangles_$TriangleGame = function() {
 	window.setInterval(Function.mkdel(this, this.$drawBoard), 33);
 };
 $Triangles_$TriangleGame.prototype = {
-	$init: function() {
-		this.$myAllTriangles = [];
-		var boardWidth = 13;
-		var boardHeight = 6;
-		this.$myTriangles = new Array(boardWidth);
-		for (var x = 0; x < boardWidth; x++) {
-			this.$myTriangles[x] = new Array(boardHeight);
+	$popNeighborTriangles: function(center) {
+		var toPop = center.getLikeNeighbors(this.$myTriangleGrid);
+		for (var $t1 = 0; $t1 < toPop.length; $t1++) {
+			var triangle = toPop[$t1];
+			this.$myTriangleGrid[triangle.x][triangle.y].pop();
 		}
-		for (var y = 0; y < boardHeight; y++) {
-			for (var x1 = 0; x1 < boardWidth; x1++) {
+	},
+	$dropTriangles: function() {
+		if (this.$drawTick % 1 !== 0) {
+			return;
+		}
+		var moves = [];
+		var didPointUp = false;
+		var bad = true;
+		while (bad) {
+			bad = false;
+			var noMoves = true;
+			for (var y = this.$boardHeight - 1; y >= 0; y--) {
+				for (var x = 0; x < this.$boardWidth; x++) {
+					var current = this.$myTriangleGrid[x][y];
+					if (ss.isNullOrUndefined(current.color) && current.transitioning === 0) {
+						if (!current.pointUp && didPointUp) {
+							continue;
+						}
+						if (y === 0 && !current.pointUp) {
+							current.transitionTo($Triangles_Utility_Help.getRandomColor());
+							if ($Triangles_$TriangleGame.$cascade) {
+								return;
+							}
+							continue;
+						}
+						var neighbors = current.getNeighbors(this.$myTriangleGrid);
+						var $t1 = $Triangles_Utility_Extensions.takeRandom($Triangles_Triangle).call(null, neighbors);
+						for (var $t2 = 0; $t2 < $t1.length; $t2++) {
+							var neighbor = $t1[$t2];
+							if (neighbor.y === current.y) {
+								if (current.pointUp) {
+									current.transitionTo(neighbor.color);
+									neighbor.color = null;
+									noMoves = false;
+									if ($Triangles_$TriangleGame.$cascade) {
+										return;
+									}
+									break;
+								}
+							}
+							else if (neighbor.y < current.y) {
+								current.transitionTo(neighbor.color);
+								neighbor.color = null;
+								noMoves = false;
+								if ($Triangles_$TriangleGame.$cascade) {
+									return;
+								}
+								break;
+							}
+						}
+						if (ss.isNullOrUndefined(current.color) && current.transitioning === 0) {
+							if (y === 0) {
+								current.transitionTo($Triangles_Utility_Help.getRandomColor());
+							}
+							else {
+								bad = true;
+							}
+						}
+					}
+				}
+			}
+			if (noMoves && didPointUp) {
+				break;
+			}
+			didPointUp = true;
+		}
+	},
+	$init: function() {
+		this.$myTriangleList = [];
+		this.$myTriangleGrid = new Array(this.$boardWidth);
+		for (var x = 0; x < this.$boardWidth; x++) {
+			this.$myTriangleGrid[x] = new Array(this.$boardHeight);
+		}
+		for (var y = 0; y < this.$boardHeight; y++) {
+			for (var x1 = 0; x1 < this.$boardWidth; x1++) {
 				var off = ((y % 2 === 0) ? 1 : 0);
 				var off2 = (x1 + off) % 2 === 0;
 				var tri = new $Triangles_Triangle(x1, y, off2, $Triangles_Utility_Help.getRandomColor());
-				this.$myTriangles[x1][y] = tri;
-				this.$myAllTriangles.add(tri);
+				this.$myTriangleGrid[x1][y] = tri;
+				this.$myTriangleList.add(tri);
 			}
 		}
 	},
 	$drawBoard: function() {
+		this.$drawTick++;
+		this.$dropTriangles();
 		this.$myCanvas.context.save();
 		this.$myCanvas.context.save();
-		this.$myCanvas.context.fillStyle = '#222222';
+		this.$myCanvas.context.fillStyle = '#343434';
 		this.$myCanvas.context.fillRect(0, 0, $Triangles_$TriangleGame.$size.x, $Triangles_$TriangleGame.$size.y);
 		this.$myCanvas.context.restore();
 		this.$myCanvas.context.translate($Triangles_$TriangleGame.$offset.x, $Triangles_$TriangleGame.$offset.y);
 		var specials = [];
 		var specials2 = [];
 		var specials3 = [];
-		for (var l = 0; l < this.$myAllTriangles.length; l++) {
-			if (this.$myAllTriangles[l].selected || this.$myAllTriangles[l].neighbors) {
-				specials.add(this.$myAllTriangles[l]);
+		for (var l = 0; l < this.$myTriangleList.length; l++) {
+			if (this.$myTriangleList[l].selected || this.$myTriangleList[l].neighbors) {
+				specials.add(this.$myTriangleList[l]);
 			}
-			else if (this.$myAllTriangles[l].glow) {
-				specials3.add(this.$myAllTriangles[l]);
+			else if (this.$myTriangleList[l].glow) {
+				specials3.add(this.$myTriangleList[l]);
 			}
-			if (this.$myAllTriangles[l].highlightedNeighbors) {
-				specials2.add(this.$myAllTriangles[l]);
+			if (this.$myTriangleList[l].highlightedNeighbors) {
+				specials2.add(this.$myTriangleList[l]);
 			}
 			else {
-				this.$myAllTriangles[l].draw(this.$myCanvas.context);
+				this.$myTriangleList[l].draw(this.$myCanvas.context);
 			}
 		}
 		//drawing happens sequentially, and it will draw over our highlight, so we draw those last.
@@ -128,22 +221,30 @@ $Triangles_$TriangleGame.prototype = {
 	}
 };
 ////////////////////////////////////////////////////////////////////////////////
+// Triangles.TriangleMove
+var $Triangles_$TriangleMove = function(location, color) {
+	this.location = null;
+	this.color = null;
+	this.location = location;
+	this.color = color;
+};
+////////////////////////////////////////////////////////////////////////////////
 // Triangles.Triangle
-var $Triangles_Triangle = function(_x, _y, upsideDown, _color) {
+var $Triangles_Triangle = function(_x, _y, pointUp, _color) {
 	this.$spacing = 32;
 	this.$transitionToColor = null;
-	this.$transitioning = 0;
+	this.transitioning = 0;
 	this.selected = false;
 	this.neighbors = false;
 	this.highlightedNeighbors = false;
 	this.glow = false;
 	this.color = null;
-	this.upsideDown = false;
+	this.pointUp = false;
 	this.y = 0;
 	this.x = 0;
 	this.x = _x;
 	this.y = _y;
-	this.upsideDown = upsideDown;
+	this.pointUp = pointUp;
 	this.color = _color;
 	this.selected = false;
 	this.neighbors = false;
@@ -154,7 +255,7 @@ $Triangles_Triangle.prototype = {
 	inBounds: function(_x, _y) {
 		_x -= $Triangles_$TriangleGame.$offset.x;
 		_y -= $Triangles_$TriangleGame.$offset.y;
-		if (this.upsideDown) {
+		if (this.pointUp) {
 			var x = this.x / 2;
 			var y = this.y;
 			var __x = x * 100 + x * this.$spacing - this.$spacing / 2;
@@ -178,7 +279,7 @@ $Triangles_Triangle.prototype = {
 	},
 	isNeighbor: function(_x, _y) {
 		var neighs;
-		neighs = (this.upsideDown ? $Triangles_Triangle.$upsideDownNeighbors : $Triangles_Triangle.$rightSideUpNeighbors);
+		neighs = (this.pointUp ? $Triangles_Triangle.$pointUpNeighbors : $Triangles_Triangle.$pointDownNeighbors);
 		for (var i = 0; i < neighs.length; i++) {
 			if (this.x + neighs[i].x === _x && this.y + neighs[i].y === _y) {
 				return true;
@@ -187,22 +288,22 @@ $Triangles_Triangle.prototype = {
 		return false;
 	},
 	getCurrentColor: function() {
-		if (this.$transitioning + 10 >= 100) {
+		if (this.transitioning + 10 >= 100) {
 			this.color = this.$transitionToColor;
-			this.$transitioning = 0;
+			this.transitioning = 0;
 		}
-		if (this.$transitioning > 0) {
-			return $Triangles_Utility_Help.getColor(this.color, this.$transitionToColor, this.$transitioning += 5);
+		if (this.transitioning > 0) {
+			return $Triangles_Utility_Help.getColor(this.color, this.$transitionToColor, this.transitioning += 5);
 		}
 		return this.color;
 	},
 	highlightNeighbors: function(_board) {
 		var neighs;
-		if (this.upsideDown) {
-			neighs = $Triangles_Triangle.$upsideDownNeighbors;
+		if (this.pointUp) {
+			neighs = $Triangles_Triangle.$pointUpNeighbors;
 		}
 		else {
-			neighs = $Triangles_Triangle.$rightSideUpNeighbors;
+			neighs = $Triangles_Triangle.$pointDownNeighbors;
 		}
 		for (var j = 0; j < _board.length; j++) {
 			for (var k = 0; k < _board[j].length; k++) {
@@ -217,9 +318,29 @@ $Triangles_Triangle.prototype = {
 			}
 		}
 	},
+	getNeighbors: function(_board) {
+		var neighs;
+		if (this.pointUp) {
+			neighs = $Triangles_Triangle.$pointUpNeighbors;
+		}
+		else {
+			neighs = $Triangles_Triangle.$pointDownNeighbors;
+		}
+		var result = [];
+		for (var i = 0; i < neighs.length; i++) {
+			var cX = this.x + neighs[i].x;
+			var cY = this.y + neighs[i].y;
+			if (cX >= 0 && cX < _board.length && cY >= 0 && cY < _board[0].length) {
+				if (ss.isValue(_board[cX][cY].color)) {
+					result.add(_board[cX][cY]);
+				}
+			}
+		}
+		return result;
+	},
 	transitionTo: function(_toColor) {
 		this.$transitionToColor = _toColor;
-		this.$transitioning = 1;
+		this.transitioning = 1;
 	},
 	draw: function(_context) {
 		_context.save();
@@ -254,7 +375,7 @@ $Triangles_Triangle.prototype = {
 			_context.lineWidth = 2;
 		}
 		_context.fillStyle = this.getCurrentColor();
-		if (this.upsideDown) {
+		if (this.pointUp) {
 			var x = this.x / 2;
 			var y = this.y;
 			_context.translate(x * 100 + x * this.$spacing - this.$spacing / 2, y * $Triangles_Triangle.$triangleLength + ss.Int32.div(y * this.$spacing, 2));
@@ -282,7 +403,7 @@ $Triangles_Triangle.prototype = {
 		_context.lineWidth *= 2;
 		if (this.glow) {
 			_context.lineWidth = 8;
-			if (this.$transitioning > 0) {
+			if (this.transitioning > 0) {
 				_context.strokeStyle = 'white';
 			}
 			else {
@@ -316,6 +437,9 @@ $Triangles_Triangle.prototype = {
 			_context.stroke();
 		}
 		_context.restore();
+	},
+	pop: function() {
+		this.color = null;
 	}
 };
 $Triangles_Triangle.startLikeNeighbors = function(_board, _x, _y, _color, _hitMap) {
@@ -332,15 +456,15 @@ $Triangles_Triangle.startLikeNeighbors = function(_board, _x, _y, _color, _hitMa
 		else {
 			return items;
 		}
-		if (_board[_x][_y].upsideDown) {
-			for (var l = 0; l < $Triangles_Triangle.$upsideDownNeighbors.length; l++) {
-				var neighs = $Triangles_Triangle.$upsideDownNeighbors[l];
+		if (_board[_x][_y].pointUp) {
+			for (var l = 0; l < $Triangles_Triangle.$pointUpNeighbors.length; l++) {
+				var neighs = $Triangles_Triangle.$pointUpNeighbors[l];
 				items.addRange($Triangles_Triangle.startLikeNeighbors(_board, _x + neighs.x, _y + neighs.y, _color, _hitMap));
 			}
 		}
 		else {
-			for (var l1 = 0; l1 < $Triangles_Triangle.$rightSideUpNeighbors.length; l1++) {
-				var neighs1 = $Triangles_Triangle.$rightSideUpNeighbors[l1];
+			for (var l1 = 0; l1 < $Triangles_Triangle.$pointDownNeighbors.length; l1++) {
+				var neighs1 = $Triangles_Triangle.$pointDownNeighbors[l1];
 				items.addRange($Triangles_Triangle.startLikeNeighbors(_board, _x + neighs1.x, _y + neighs1.y, _color, _hitMap));
 			}
 		}
@@ -386,6 +510,61 @@ $Triangles_Utility_CanvasInformation.create$1 = function(canvas, w, h) {
 // Triangles.Utility.Extensions
 var $Triangles_Utility_Extensions = function() {
 };
+$Triangles_Utility_Extensions.takeRandom = function(T) {
+	return function(items) {
+		var ls = items.clone();
+		ls.sort(function(a, b) {
+			return ss.Int32.trunc(Math.round(Math.random()) - 0.5);
+		});
+		return ls;
+		//
+		///*
+		//
+		//foreach (var item in items) {
+		//
+		//yield return item;
+		//
+		//}
+		//
+		//yield break;
+		//
+		//#1#
+		//
+		//
+		//
+		//;
+		//
+		//List<bool> used=new List<bool>();
+		//
+		//for (int i = 0; i < items.Count; i++) {
+		//
+		//used[i] = false;
+		//
+		//}
+		//
+		//
+		//
+		//int usedCount = 0;
+		//
+		//
+		//
+		//while (usedCount!=items.Count-1) {
+		//
+		//var cur = ( (int) Math.Random() * items.Count );
+		//
+		//if (!used[cur]) {
+		//
+		//used[cur] = true;
+		//
+		//usedCount++;
+		//
+		//yield return items[cur];
+		//
+		//}
+		//
+		//}
+	};
+};
 $Triangles_Utility_Extensions.withData = function(T, T2) {
 	return function(item, data) {
 		return new (Type.makeGenericType($Triangles_Utility_ExtraData$2, [T, T2]))(item, data);
@@ -425,6 +604,9 @@ Type.registerGenericClass(global, 'Triangles.Utility.ExtraData$2', $Triangles_Ut
 var $Triangles_Utility_Help = function() {
 };
 $Triangles_Utility_Help.getColor = function(_start, _end, _percent) {
+	if (ss.isNullOrUndefined(_start)) {
+		_start = '#FFFFFF';
+	}
 	var hex2Dec = function(_hex) {
 		return parseInt(_hex, 16);
 	};
@@ -509,17 +691,19 @@ $Triangles_Utility_Pointer.$ctor = function(x, y, delta, right) {
 };
 Type.registerClass(null, 'Triangles.$Program', $Triangles_$Program, Object);
 Type.registerClass(null, 'Triangles.$TriangleGame', $Triangles_$TriangleGame, Object);
+Type.registerClass(null, 'Triangles.$TriangleMove', $Triangles_$TriangleMove, Object);
 Type.registerClass(global, 'Triangles.Triangle', $Triangles_Triangle, Object);
 Type.registerClass(global, 'Triangles.Utility.CanvasInformation', $Triangles_Utility_CanvasInformation, Object);
 Type.registerClass(global, 'Triangles.Utility.Extensions', $Triangles_Utility_Extensions, Object);
 Type.registerClass(global, 'Triangles.Utility.Help', $Triangles_Utility_Help, Object);
 Type.registerClass(global, 'Triangles.Utility.Point', $Triangles_Utility_Point, Object);
 Type.registerClass(global, 'Triangles.Utility.Pointer', $Triangles_Utility_Pointer);
+$Triangles_$TriangleGame.$cascade = true;
 $Triangles_$TriangleGame.$offset = $Triangles_Utility_Point.$ctor(160, 70);
 $Triangles_$TriangleGame.$size = $Triangles_Utility_Point.$ctor(1100, 850);
 $Triangles_Triangle.$triangleLength = 100;
-$Triangles_Triangle.$upsideDownNeighbors = [$Triangles_Utility_Point.$ctor(-1, 0), $Triangles_Utility_Point.$ctor(1, 0), $Triangles_Utility_Point.$ctor(-2, 0), $Triangles_Utility_Point.$ctor(2, 0), $Triangles_Utility_Point.$ctor(0, -1), $Triangles_Utility_Point.$ctor(-1, -1), $Triangles_Utility_Point.$ctor(1, -1), $Triangles_Utility_Point.$ctor(0, 1), $Triangles_Utility_Point.$ctor(-1, 1), $Triangles_Utility_Point.$ctor(1, 1), $Triangles_Utility_Point.$ctor(-2, 1), $Triangles_Utility_Point.$ctor(2, 1)];
-$Triangles_Triangle.$rightSideUpNeighbors = [$Triangles_Utility_Point.$ctor(-1, 0), $Triangles_Utility_Point.$ctor(1, 0), $Triangles_Utility_Point.$ctor(-2, 0), $Triangles_Utility_Point.$ctor(2, 0), $Triangles_Utility_Point.$ctor(0, 1), $Triangles_Utility_Point.$ctor(-1, 1), $Triangles_Utility_Point.$ctor(1, 1), $Triangles_Utility_Point.$ctor(0, -1), $Triangles_Utility_Point.$ctor(-1, -1), $Triangles_Utility_Point.$ctor(1, -1), $Triangles_Utility_Point.$ctor(-2, -1), $Triangles_Utility_Point.$ctor(2, -1)];
+$Triangles_Triangle.$pointUpNeighbors = [$Triangles_Utility_Point.$ctor(-1, 0), $Triangles_Utility_Point.$ctor(1, 0), $Triangles_Utility_Point.$ctor(-2, 0), $Triangles_Utility_Point.$ctor(2, 0), $Triangles_Utility_Point.$ctor(0, -1), $Triangles_Utility_Point.$ctor(-1, -1), $Triangles_Utility_Point.$ctor(1, -1), $Triangles_Utility_Point.$ctor(0, 1), $Triangles_Utility_Point.$ctor(-1, 1), $Triangles_Utility_Point.$ctor(1, 1), $Triangles_Utility_Point.$ctor(-2, 1), $Triangles_Utility_Point.$ctor(2, 1)];
+$Triangles_Triangle.$pointDownNeighbors = [$Triangles_Utility_Point.$ctor(-1, 0), $Triangles_Utility_Point.$ctor(1, 0), $Triangles_Utility_Point.$ctor(-2, 0), $Triangles_Utility_Point.$ctor(2, 0), $Triangles_Utility_Point.$ctor(0, 1), $Triangles_Utility_Point.$ctor(-1, 1), $Triangles_Utility_Point.$ctor(1, 1), $Triangles_Utility_Point.$ctor(0, -1), $Triangles_Utility_Point.$ctor(-1, -1), $Triangles_Utility_Point.$ctor(1, -1), $Triangles_Utility_Point.$ctor(-2, -1), $Triangles_Utility_Point.$ctor(2, -1)];
 $Triangles_Utility_CanvasInformation.$blackPixel = null;
 $Triangles_Utility_Help.colors = ['#FF3700', '#7654FF', '#77FFB6', '#DAc42a', '#Ca2dFA'];
 $Triangles_$Program.$main();

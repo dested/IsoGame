@@ -41,3 +41,5 @@ _ReSharper*/
 ~$*
 
 /Tools/Build/App.config
+/packages
+/packages

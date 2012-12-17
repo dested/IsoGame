@@ -1,17 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Html;
 using System.Html.Media.Graphics;
+using System.Runtime.CompilerServices;
 using Triangles.Utility;
 namespace Triangles
 {
     internal class TriangleGame
     {
+        private const bool cascade = true;
         public static Point Offset = new Point(160, 70);
         public static Point Size = new Point(1100, 850);
-        private List<Triangle> myAllTriangles;
+        private int boardHeight = 6;
+        private int boardWidth = 13;
+        private int drawTick;
         private CanvasInformation myCanvas;
         private Triangle myFirstSelected;
-        private Triangle[][] myTriangles;
+        private Triangle[][] myTriangleGrid;
+        private List<Triangle> myTriangleList;
 
         public TriangleGame()
         {
@@ -22,53 +27,68 @@ namespace Triangles
 
             myCanvas.Canvas.AddEventListener("contextmenu", (evt) => { evt.PreventDefault(); }, false);
 
-            myCanvas.JCanvas.MouseDown(_ae => {
-                                           var pointer = Help.GetCursorPosition(myCanvas.Canvas, _ae);
+            myCanvas.JCanvas.MouseDown(e => {
+                                           var pointer = Help.GetCursorPosition(myCanvas.Canvas, e);
 
                                            Triangle selected = null;
 
-                                           if (pointer.Right) {
-                                               var neighbors = new List<Triangle>();
+                                           if (!pointer.Right) {
+                                               for (int l = 0; l < myTriangleList.Count; l++) {
+                                                   myTriangleList[l].HighlightedNeighbors = false;
+                                                   if (myTriangleList[l].inBounds(pointer.X, pointer.Y)) {
+                                                       if (myTriangleList[l].Selected == true) {
+                                                           myFirstSelected = null;
+                                                           myTriangleList[l].Selected = false;
+                                                           continue;
+                                                       }
 
-                                               for (var l = 0; l < myAllTriangles.Count; l++) {
-                                                   myAllTriangles[l].Neighbors = false;
-                                                   if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) {
-                                                       if (!myAllTriangles[l].Neighbors)
-                                                           neighbors = myAllTriangles[l].getLikeNeighbors(myTriangles);
+                                                       if (myTriangleList[l].Neighbors) popNeighborTriangles(myTriangleList[l]);
+                                                       else ( selected = myTriangleList[l] ).Selected = true;
+                                                   } else
+                                                       myTriangleList[l].Selected = false;
+
+                                                   myTriangleList[l].Neighbors = false;
+                                               }
+
+                                               if (selected != null) {
+                                                   if (selected.Color != null) {
+                                                       if (myFirstSelected == null || !myFirstSelected.isNeighbor(selected.X, selected.Y)) {
+                                                           myFirstSelected = selected;
+
+                                                           selected.HighlightNeighbors(myTriangleGrid);
+                                                       } else {
+                                                           var c2 = myFirstSelected.Color;
+                                                           myFirstSelected.TransitionTo(selected.Color);
+                                                           selected.TransitionTo(c2);
+
+                                                           selected.Selected = false;
+                                                           myFirstSelected = null;
+                                                       }
                                                    }
+                                               }
+                                           } else {
+                                               var neighbors = new List<Triangle>();
+                                               myFirstSelected = null;
+                                               for (var l = 0; l < myTriangleList.Count; l++) {
+                                                   if (myTriangleList[l].inBounds(pointer.X, pointer.Y)) {
+                                                       if (!myTriangleList[l].Neighbors)
+                                                           neighbors = myTriangleList[l].getLikeNeighbors(myTriangleGrid);
+                                                   }
+
+                                                   myTriangleList[l].Selected = myTriangleList[l].HighlightedNeighbors = myTriangleList[l].Neighbors = false;
                                                }
 
                                                for (var i = 0; i < neighbors.Count; i++) {
                                                    neighbors[i].Neighbors = true;
                                                }
-                                           } else {
-                                               for (int l = 0; l < myAllTriangles.Count; l++) {
-                                                   myAllTriangles[l].Selected = myAllTriangles[l].HighlightedNeighbors = myAllTriangles[l].Neighbors = false;
-                                                   if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) ( selected = myAllTriangles[l] ).Selected = true;
-                                               }
-
-                                               if (selected != null) {
-                                                   if (myFirstSelected == null || !myFirstSelected.isNeighbor(selected.X, selected.Y)) {
-                                                       myFirstSelected = selected;
-
-                                                       selected.HighlightNeighbors(myTriangles);
-                                                   } else {
-                                                       var c2 = myFirstSelected.Color;
-                                                       myFirstSelected.TransitionTo(selected.Color);
-                                                       selected.TransitionTo(c2);
-
-                                                       selected.Selected = false;
-                                                       myFirstSelected = null;
-                                                   }
-                                               }
                                            }
                                        });
-            myCanvas.JCanvas.MouseMove(_ae => {
-                                           var pointer = Help.GetCursorPosition(myCanvas.Canvas, _ae);
+            myCanvas.JCanvas.MouseMove(e => {
+                                           var pointer = Help.GetCursorPosition(myCanvas.Canvas, e);
 
-                                           for (var l = 0; l < myAllTriangles.Count; l++) {
-                                               myAllTriangles[l].Glow = false;
-                                               if (myAllTriangles[l].inBounds(pointer.X, pointer.Y)) myAllTriangles[l].Glow = true;
+                                           for (var l = 0; l < myTriangleList.Count; l++) {
+                                               myTriangleList[l].Glow = false;
+                                               if (myTriangleList[l].inBounds(pointer.X, pointer.Y)) myTriangleList[l].Glow = true;
                                            }
                                        });
 
@@ -76,16 +96,85 @@ namespace Triangles
             Window.SetInterval(drawBoard, 1000 / 30);
         }
 
+        private void popNeighborTriangles(Triangle center)
+        {
+            var toPop = center.getLikeNeighbors(myTriangleGrid);
+
+            foreach (var triangle in toPop) {
+                myTriangleGrid[triangle.X][triangle.Y].Pop();
+            }
+        }
+
+        private void dropTriangles()
+        {
+            if (drawTick % 1 != 0) return;
+
+            List<TriangleMove> moves = new List<TriangleMove>();
+            bool didPointUp = false;
+            bool bad = true;
+            while (bad) {
+                bad = false;
+                bool noMoves = true;
+
+                for (int y = boardHeight - 1; y >= 0; y--) {
+                    for (int x = 0; x < boardWidth; x++) {
+                        var current = myTriangleGrid[x][y];
+                        if (current.Color == null && current.transitioning == 0) {
+                            if (!current.PointUp && didPointUp) continue;
+
+                            if (y == 0 && !current.PointUp) {
+                                current.TransitionTo(Help.GetRandomColor());
+                                if (cascade)
+                                    return;
+
+                                continue;
+                            }
+
+                            var neighbors = current.GetNeighbors(myTriangleGrid);
+                            foreach (var neighbor in neighbors.TakeRandom()) {
+                                if (neighbor.Y == current.Y) {
+                                    if (current.PointUp) {
+                                        current.TransitionTo(neighbor.Color);
+                                        neighbor.Color = null;
+                                        noMoves = false;
+
+                                        if (cascade)
+                                            return;
+                                        break;
+                                    }
+                                } else if (neighbor.Y < current.Y) {
+                                    current.TransitionTo(neighbor.Color);
+                                    neighbor.Color = null;
+                                    noMoves = false;
+                                    if (cascade)
+                                        return;
+
+                                    break;
+                                }
+                            }
+
+                            if (current.Color == null && current.transitioning == 0) {
+                                if (y == 0)
+                                    current.TransitionTo(Help.GetRandomColor());
+                                else
+                                    bad = true;
+                            }
+                        }
+                    }
+                }
+                if (noMoves && didPointUp) break;
+                didPointUp = true;
+            }
+        }
+
         private void init()
         {
-            myAllTriangles = new List<Triangle>();
-            var boardWidth = 13;
-            var boardHeight = 6;
+            myTriangleList = new List<Triangle>();
 
-            myTriangles = new Triangle[boardWidth][];
+            myTriangleGrid = new Triangle[boardWidth][];
 
             for (var x = 0; x < boardWidth; x++) {
-                myTriangles[x] = new Triangle[boardHeight];
+                myTriangleGrid[x] = new Triangle[boardHeight];
             }
 
             for (var y = 0; y < boardHeight; y++) {
@@ -95,18 +184,21 @@ namespace Triangles
 
                     var tri = new Triangle(x, y, off2, Help.GetRandomColor());
 
-                    myTriangles[x][y] = tri;
+                    myTriangleGrid[x][y] = tri;
 
-                    myAllTriangles.Add(tri);
+                    myTriangleList.Add(tri);
                 }
             }
         }
 
         private void drawBoard()
         {
+            drawTick++;
+            dropTriangles();
+
             myCanvas.Context.Save();
             myCanvas.Context.Save();
-            myCanvas.Context.FillStyle = "#222222";
+            myCanvas.Context.FillStyle = "#343434";
             myCanvas.Context.FillRect(0, 0, Size.X, Size.Y);
             myCanvas.Context.Restore();
 
@@ -116,14 +208,14 @@ namespace Triangles
             var specials2 = new List<Triangle>();
             var specials3 = new List<Triangle>();
 
-            for (int l = 0; l < myAllTriangles.Count; l++) {
-                if (myAllTriangles[l].Selected || myAllTriangles[l].Neighbors)
-                    specials.Add(myAllTriangles[l]);
-                else if (myAllTriangles[l].Glow) specials3.Add(myAllTriangles[l]);
-                if (myAllTriangles[l].HighlightedNeighbors)
-                    specials2.Add(myAllTriangles[l]);
+            for (int l = 0; l < myTriangleList.Count; l++) {
+                if (myTriangleList[l].Selected || myTriangleList[l].Neighbors)
+                    specials.Add(myTriangleList[l]);
+                else if (myTriangleList[l].Glow) specials3.Add(myTriangleList[l]);
+                if (myTriangleList[l].HighlightedNeighbors)
+                    specials2.Add(myTriangleList[l]);
 
-                else myAllTriangles[l].Draw(myCanvas.Context);
+                else myTriangleList[l].Draw(myCanvas.Context);
             }
 
             //drawing happens sequentially, and it will draw over our highlight, so we draw those last.
@@ -138,6 +230,19 @@ namespace Triangles
             }
 
             myCanvas.Context.Restore();
+        }
+    }
+    internal class TriangleMove
+    {
+        [IntrinsicProperty]
+        public Point Location { get; set; }
+        [IntrinsicProperty]
+        public string Color { get; set; }
+
+        public TriangleMove(Point location, string color)
+        {
+            Location = location;
+            Color = color;
         }
     }
 }

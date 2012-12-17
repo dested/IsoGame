@@ -5,26 +5,11 @@ namespace Triangles.Utility
 {
     public static class Help
     {
-        /***********************************************
-*
-* Function    : getColor
-*
-* Parameters  :	start - the start color (in the form "RRGGBB" e.g. "FF00AC")
-*			end - the end color (in the form "RRGGBB" e.g. "FF00AC")
-*			percent - the percent (0-100) of the fade between start & end
-*
-* returns	  : color in the form "#RRGGBB" e.g. "#FA13CE"
-*
-* Description : This is a utility function. Given a start and end color and
-*		    a percentage fade it returns a color in between the 2 colors
-*
-* Author	  : Open Source
-*
-*************************************************/
         public static string[] colors = {"#FF3700", "#7654FF", "#77FFB6", "#DAc42a", "#Ca2dFA"};
 
         public static string getColor(string _start, string _end, int _percent)
         {
+            if (_start == null) _start = "#FFFFFF";
             var hex2Dec = new Func<string, int>((_hex) => { return ( int.Parse(_hex, 16) ); });
             var dec2Hex = new Func<int, string>((_dec) => { return ( _dec < 16 ? "0" : "" ) + _dec.ToString(16); });
 
@@ -66,8 +51,6 @@ namespace Triangles.Utility
                 return new Pointer(ev.PageX - offsetX, ev.PageY - offsetY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
             return new Pointer(ev.ClientX - offsetX, ev.ClientY - offsetY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
         }
-
-        /************************************************/
 
         public static string GetRandomColor()
         {
