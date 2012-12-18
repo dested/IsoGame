@@ -11,6 +11,33 @@ namespace Triangles.Utility
             return o;
         }
 
+        public static TrianglePiece[] UpsideDown(this TrianglePiece[] items)
+        {
+            List<TrianglePiece> pieces = new List<TrianglePiece>();
+            int highest = 0;
+            foreach (var trianglePiece in items)
+            {
+                if (trianglePiece.Y > highest)
+                    highest = trianglePiece.Y;
+            }
+
+            foreach (var trianglePiece in items)
+            {
+                pieces.Add(new TrianglePiece(trianglePiece.X, highest - trianglePiece.Y, !trianglePiece.PointUp));
+            }
+
+            return pieces.Array();
+        }
+        public static TrianglePiece[] Inverse(this TrianglePiece[] items)
+        {
+            List<TrianglePiece> pieces = new List<TrianglePiece>();
+            foreach (var trianglePiece in items) {
+                pieces.Add(new TrianglePiece(trianglePiece.X, trianglePiece.Y, !trianglePiece.PointUp));
+            }
+
+            return pieces.Array();
+        }
+
         [InlineCode("{o}")]
         [IgnoreGenericArguments]
         public static T Me<T>(this object o)

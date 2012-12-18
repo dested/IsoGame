@@ -10,8 +10,8 @@ $Triangles_$Program.$main = function() {
 ////////////////////////////////////////////////////////////////////////////////
 // Triangles.TriangleGame
 var $Triangles_$TriangleGame = function() {
-	this.$boardHeight = 6;
-	this.$boardWidth = 13;
+	this.$boardHeight = 10;
+	this.$boardWidth = 21;
 	this.$drawTick = 0;
 	this.$myCanvas = null;
 	this.$myFirstSelected = null;
@@ -66,14 +66,17 @@ var $Triangles_$TriangleGame = function() {
 		else {
 			var neighbors = [];
 			this.$myFirstSelected = null;
+			var goodOne = null;
 			for (var l1 = 0; l1 < this.$myTriangleList.length; l1++) {
 				if (this.$myTriangleList[l1].inBounds(pointer.x, pointer.y)) {
 					if (!this.$myTriangleList[l1].neighbors) {
-						neighbors = this.$myTriangleList[l1].getLikeNeighbors(this.$myTriangleGrid);
+						goodOne = this.$myTriangleList[l1];
+						neighbors = goodOne.getLikeNeighbors(this.$myTriangleGrid);
 					}
 				}
 				this.$myTriangleList[l1].selected = this.$myTriangleList[l1].highlightedNeighbors = this.$myTriangleList[l1].neighbors = false;
 			}
+			neighbors = $Triangles_Shapes.filterToShape(neighbors, goodOne);
 			for (var i = 0; i < neighbors.length; i++) {
 				neighbors[i].neighbors = true;
 			}
@@ -89,18 +92,19 @@ var $Triangles_$TriangleGame = function() {
 		}
 	}));
 	this.$init();
-	window.setInterval(Function.mkdel(this, this.$drawBoard), 33);
+	window.setInterval(Function.mkdel(this, this.$drawBoard), 16);
 };
 $Triangles_$TriangleGame.prototype = {
 	$popNeighborTriangles: function(center) {
 		var toPop = center.getLikeNeighbors(this.$myTriangleGrid);
+		toPop = $Triangles_Shapes.filterToShape(toPop, center);
 		for (var $t1 = 0; $t1 < toPop.length; $t1++) {
 			var triangle = toPop[$t1];
 			this.$myTriangleGrid[triangle.x][triangle.y].pop();
 		}
 	},
 	$dropTriangles: function() {
-		if (this.$drawTick % 1 !== 0) {
+		if (this.$drawTick % 3 !== 0) {
 			return;
 		}
 		var moves = [];
@@ -110,6 +114,7 @@ $Triangles_$TriangleGame.prototype = {
 			bad = false;
 			var noMoves = true;
 			for (var y = this.$boardHeight - 1; y >= 0; y--) {
+				var poppedThisRow = false;
 				for (var x = 0; x < this.$boardWidth; x++) {
 					var current = this.$myTriangleGrid[x][y];
 					if (ss.isNullOrUndefined(current.color) && current.transitioning === 0) {
@@ -132,6 +137,7 @@ $Triangles_$TriangleGame.prototype = {
 									current.transitionTo(neighbor.color);
 									neighbor.color = null;
 									noMoves = false;
+									poppedThisRow = true;
 									if ($Triangles_$TriangleGame.$cascade) {
 										return;
 									}
@@ -142,6 +148,7 @@ $Triangles_$TriangleGame.prototype = {
 								current.transitionTo(neighbor.color);
 								neighbor.color = null;
 								noMoves = false;
+								poppedThisRow = true;
 								if ($Triangles_$TriangleGame.$cascade) {
 									return;
 								}
@@ -157,6 +164,9 @@ $Triangles_$TriangleGame.prototype = {
 							}
 						}
 					}
+				}
+				if (poppedThisRow && $Triangles_$TriangleGame.$rowcascade) {
+					return;
 				}
 			}
 			if (noMoves && didPointUp) {
@@ -190,32 +200,8 @@ $Triangles_$TriangleGame.prototype = {
 		this.$myCanvas.context.fillRect(0, 0, $Triangles_$TriangleGame.$size.x, $Triangles_$TriangleGame.$size.y);
 		this.$myCanvas.context.restore();
 		this.$myCanvas.context.translate($Triangles_$TriangleGame.$offset.x, $Triangles_$TriangleGame.$offset.y);
-		var specials = [];
-		var specials2 = [];
-		var specials3 = [];
 		for (var l = 0; l < this.$myTriangleList.length; l++) {
-			if (this.$myTriangleList[l].selected || this.$myTriangleList[l].neighbors) {
-				specials.add(this.$myTriangleList[l]);
-			}
-			else if (this.$myTriangleList[l].glow) {
-				specials3.add(this.$myTriangleList[l]);
-			}
-			if (this.$myTriangleList[l].highlightedNeighbors) {
-				specials2.add(this.$myTriangleList[l]);
-			}
-			else {
-				this.$myTriangleList[l].draw(this.$myCanvas.context);
-			}
-		}
-		//drawing happens sequentially, and it will draw over our highlight, so we draw those last.
-		for (var l1 = 0; l1 < specials2.length; l1++) {
-			specials2[l1].draw(this.$myCanvas.context);
-		}
-		for (var l2 = 0; l2 < specials.length; l2++) {
-			specials[l2].draw(this.$myCanvas.context);
-		}
-		for (var l3 = 0; l3 < specials3.length; l3++) {
-			specials3[l3].draw(this.$myCanvas.context);
+			this.$myTriangleList[l].draw(this.$myCanvas.context);
 		}
 		this.$myCanvas.context.restore();
 	}
@@ -229,9 +215,49 @@ var $Triangles_$TriangleMove = function(location, color) {
 	this.color = color;
 };
 ////////////////////////////////////////////////////////////////////////////////
+// Triangles.Shapes
+var $Triangles_Shapes = function() {
+};
+$Triangles_Shapes.filterToShape = function(neighbors, goodOne) {
+	for (var $t1 = 0; $t1 < $Triangles_Shapes.$shapes.length; $t1++) {
+		var trianglePiecese = $Triangles_Shapes.$shapes[$t1];
+		for (var $t2 = 0; $t2 < trianglePiecese.length; $t2++) {
+			var trianglePiece = trianglePiecese[$t2];
+			var startX = trianglePiece.x;
+			//0
+			var startY = trianglePiece.y;
+			//1
+			var perfectTriangles = [];
+			perfectTriangles.add(goodOne);
+			for (var $t3 = 0; $t3 < trianglePiecese.length; $t3++) {
+				var piece = trianglePiecese[$t3];
+				if (!ss.referenceEquals(piece, trianglePiece)) {
+					for (var $t4 = 0; $t4 < neighbors.length; $t4++) {
+						var neighbor = neighbors[$t4];
+						//          6           6
+						var nX = neighbor.x - goodOne.x;
+						//          7           6
+						var nY = neighbor.y - goodOne.y;
+						//  0             1          1             1
+						if (nX + startX === piece.x && nY + startY === piece.y && piece.pointUp === neighbor.pointUp) {
+							perfectTriangles.add(neighbor);
+							break;
+						}
+					}
+				}
+			}
+			if (perfectTriangles.length === trianglePiecese.length) {
+				//good
+				return perfectTriangles;
+			}
+		}
+	}
+	return [];
+};
+////////////////////////////////////////////////////////////////////////////////
 // Triangles.Triangle
 var $Triangles_Triangle = function(_x, _y, pointUp, _color) {
-	this.$spacing = 32;
+	this.$spacing = 19;
 	this.$transitionToColor = null;
 	this.transitioning = 0;
 	this.selected = false;
@@ -258,16 +284,16 @@ $Triangles_Triangle.prototype = {
 		if (this.pointUp) {
 			var x = this.x / 2;
 			var y = this.y;
-			var __x = x * 100 + x * this.$spacing - this.$spacing / 2;
-			var __y = y * $Triangles_Triangle.$triangleLength + ss.Int32.div(y * this.$spacing, 2);
-			return $Triangles_Utility_Help.isPointInTriangle($Triangles_Utility_Point.$ctor(_x, _y), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x), __y), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x + 50), __y + $Triangles_Triangle.$triangleLength), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x - 50), __y + $Triangles_Triangle.$triangleLength));
+			var __x = x * 60 + x * this.$spacing - this.$spacing / 2;
+			var __y = y * $Triangles_Triangle.triangleLength + ss.Int32.div(y * this.$spacing, 2);
+			return $Triangles_Utility_Help.isPointInTriangle($Triangles_Utility_Point.$ctor(_x, _y), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x), __y), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x + 30), __y + $Triangles_Triangle.triangleLength), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x - 30), __y + $Triangles_Triangle.triangleLength));
 		}
 		else {
 			var x1 = (this.x - 1) / 2;
 			var y1 = this.y;
-			var __x1 = x1 * 100 + x1 * this.$spacing;
-			var __y1 = y1 * $Triangles_Triangle.$triangleLength + ss.Int32.div(y1 * this.$spacing, 2);
-			return $Triangles_Utility_Help.isPointInTriangle($Triangles_Utility_Point.$ctor(_x, _y), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x1 + 50), __y1 + $Triangles_Triangle.$triangleLength), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x1), __y1), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x1 + 100), __y1));
+			var __x1 = x1 * 60 + x1 * this.$spacing;
+			var __y1 = y1 * $Triangles_Triangle.triangleLength + ss.Int32.div(y1 * this.$spacing, 2);
+			return $Triangles_Utility_Help.isPointInTriangle($Triangles_Utility_Point.$ctor(_x, _y), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x1 + 30), __y1 + $Triangles_Triangle.triangleLength), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x1), __y1), $Triangles_Utility_Point.$ctor(ss.Int32.trunc(__x1 + 60), __y1));
 		}
 	},
 	getLikeNeighbors: function(_board) {
@@ -288,12 +314,13 @@ $Triangles_Triangle.prototype = {
 		return false;
 	},
 	getCurrentColor: function() {
-		if (this.transitioning + 10 >= 100) {
+		var increase = 15;
+		if (this.transitioning + increase >= 100) {
 			this.color = this.$transitionToColor;
 			this.transitioning = 0;
 		}
 		if (this.transitioning > 0) {
-			return $Triangles_Utility_Help.getColor(this.color, this.$transitionToColor, this.transitioning += 5);
+			return $Triangles_Utility_Help.getColor(this.color, this.$transitionToColor, this.transitioning += increase);
 		}
 		return this.color;
 	},
@@ -369,34 +396,39 @@ $Triangles_Triangle.prototype = {
 		}
 		else if (this.highlightedNeighbors) {
 			_context.strokeStyle = '#FcFcFc';
-			_context.lineWidth = 6;
+			_context.lineWidth = 4;
 		}
 		else {
 			_context.lineWidth = 2;
 		}
-		_context.fillStyle = this.getCurrentColor();
+		var currentColor = this.getCurrentColor();
+		if (ss.isNullOrUndefined(currentColor)) {
+			_context.restore();
+			return;
+		}
+		_context.fillStyle = currentColor;
 		if (this.pointUp) {
 			var x = this.x / 2;
 			var y = this.y;
-			_context.translate(x * 100 + x * this.$spacing - this.$spacing / 2, y * $Triangles_Triangle.$triangleLength + ss.Int32.div(y * this.$spacing, 2));
+			_context.translate(x * 60 + x * this.$spacing - this.$spacing / 2, y * $Triangles_Triangle.triangleLength + ss.Int32.div(y * this.$spacing, 2));
 			if (this.selected) {
 				//  ctx.rotate((cur+=3)*Math.PI/180); 
 			}
 			_context.moveTo(0, 0);
-			_context.lineTo(50, 100);
-			_context.lineTo(-50, 100);
+			_context.lineTo(30, 60);
+			_context.lineTo(-30, 60);
 			_context.lineTo(0, 0);
 		}
 		else {
 			var x1 = (this.x - 1) / 2;
 			var y1 = this.y;
-			_context.translate(x1 * 100 + x1 * this.$spacing, y1 * $Triangles_Triangle.$triangleLength + ss.Int32.div(y1 * this.$spacing, 2));
+			_context.translate(x1 * 60 + x1 * this.$spacing, y1 * $Triangles_Triangle.triangleLength + ss.Int32.div(y1 * this.$spacing, 2));
 			if (this.selected) {
 				//  ctx.rotate((cur+=3)*Math.PI/180); 
 			}
 			_context.moveTo(0, 0);
-			_context.lineTo(100, 0);
-			_context.lineTo(50, 100);
+			_context.lineTo(60, 0);
+			_context.lineTo(30, 60);
 			_context.lineTo(0, 0);
 		}
 		_context.fill();
@@ -472,6 +504,20 @@ $Triangles_Triangle.startLikeNeighbors = function(_board, _x, _y, _color, _hitMa
 	return items;
 };
 ////////////////////////////////////////////////////////////////////////////////
+// Triangles.TrianglePiece
+var $Triangles_TrianglePiece = function() {
+};
+$Triangles_TrianglePiece.$ctor = function(x, y, pointUp) {
+	var $this = {};
+	$this.x = 0;
+	$this.y = 0;
+	$this.pointUp = false;
+	$this.x = x;
+	$this.y = y;
+	$this.pointUp = pointUp;
+	return $this;
+};
+////////////////////////////////////////////////////////////////////////////////
 // Triangles.Utility.CanvasInformation
 var $Triangles_Utility_CanvasInformation = function(context, domCanvas) {
 	this.context = null;
@@ -509,6 +555,29 @@ $Triangles_Utility_CanvasInformation.create$1 = function(canvas, w, h) {
 ////////////////////////////////////////////////////////////////////////////////
 // Triangles.Utility.Extensions
 var $Triangles_Utility_Extensions = function() {
+};
+$Triangles_Utility_Extensions.upsideDown = function(items) {
+	var pieces = [];
+	var highest = 0;
+	for (var $t1 = 0; $t1 < items.length; $t1++) {
+		var trianglePiece = items[$t1];
+		if (trianglePiece.y > highest) {
+			highest = trianglePiece.y;
+		}
+	}
+	for (var $t2 = 0; $t2 < items.length; $t2++) {
+		var trianglePiece1 = items[$t2];
+		pieces.add($Triangles_TrianglePiece.$ctor(trianglePiece1.x, highest - trianglePiece1.y, !trianglePiece1.pointUp));
+	}
+	return pieces;
+};
+$Triangles_Utility_Extensions.inverse = function(items) {
+	var pieces = [];
+	for (var $t1 = 0; $t1 < items.length; $t1++) {
+		var trianglePiece = items[$t1];
+		pieces.add($Triangles_TrianglePiece.$ctor(trianglePiece.x, trianglePiece.y, !trianglePiece.pointUp));
+	}
+	return pieces;
 };
 $Triangles_Utility_Extensions.takeRandom = function(T) {
 	return function(items) {
@@ -692,18 +761,43 @@ $Triangles_Utility_Pointer.$ctor = function(x, y, delta, right) {
 Type.registerClass(null, 'Triangles.$Program', $Triangles_$Program, Object);
 Type.registerClass(null, 'Triangles.$TriangleGame', $Triangles_$TriangleGame, Object);
 Type.registerClass(null, 'Triangles.$TriangleMove', $Triangles_$TriangleMove, Object);
+Type.registerClass(global, 'Triangles.Shapes', $Triangles_Shapes, Object);
 Type.registerClass(global, 'Triangles.Triangle', $Triangles_Triangle, Object);
+Type.registerClass(global, 'Triangles.TrianglePiece', $Triangles_TrianglePiece, Object);
 Type.registerClass(global, 'Triangles.Utility.CanvasInformation', $Triangles_Utility_CanvasInformation, Object);
 Type.registerClass(global, 'Triangles.Utility.Extensions', $Triangles_Utility_Extensions, Object);
 Type.registerClass(global, 'Triangles.Utility.Help', $Triangles_Utility_Help, Object);
 Type.registerClass(global, 'Triangles.Utility.Point', $Triangles_Utility_Point, Object);
 Type.registerClass(global, 'Triangles.Utility.Pointer', $Triangles_Utility_Pointer);
-$Triangles_$TriangleGame.$cascade = true;
+$Triangles_$TriangleGame.$cascade = false;
+$Triangles_$TriangleGame.$rowcascade = true;
 $Triangles_$TriangleGame.$offset = $Triangles_Utility_Point.$ctor(160, 70);
 $Triangles_$TriangleGame.$size = $Triangles_Utility_Point.$ctor(1100, 850);
-$Triangles_Triangle.$triangleLength = 100;
+$Triangles_Shapes.$triforce = [$Triangles_TrianglePiece.$ctor(1, 0, true), $Triangles_TrianglePiece.$ctor(0, 1, true), $Triangles_TrianglePiece.$ctor(2, 1, true)];
+$Triangles_Shapes.$circle = [$Triangles_TrianglePiece.$ctor(0, 0, true), $Triangles_TrianglePiece.$ctor(1, 0, false), $Triangles_TrianglePiece.$ctor(2, 0, true), $Triangles_TrianglePiece.$ctor(0, 1, false), $Triangles_TrianglePiece.$ctor(1, 1, true), $Triangles_TrianglePiece.$ctor(2, 1, false)];
+$Triangles_Shapes.$bigTriforce = [$Triangles_TrianglePiece.$ctor(2, 0, true), $Triangles_TrianglePiece.$ctor(1, 1, true), $Triangles_TrianglePiece.$ctor(3, 1, true), $Triangles_TrianglePiece.$ctor(0, 2, true), $Triangles_TrianglePiece.$ctor(2, 2, true), $Triangles_TrianglePiece.$ctor(4, 2, true)];
+$Triangles_Shapes.$biggerTriforce = [$Triangles_TrianglePiece.$ctor(3, 0, true), $Triangles_TrianglePiece.$ctor(2, 1, true), $Triangles_TrianglePiece.$ctor(4, 1, true), $Triangles_TrianglePiece.$ctor(1, 2, true), $Triangles_TrianglePiece.$ctor(3, 2, true), $Triangles_TrianglePiece.$ctor(5, 2, true), $Triangles_TrianglePiece.$ctor(0, 3, true), $Triangles_TrianglePiece.$ctor(2, 3, true), $Triangles_TrianglePiece.$ctor(4, 3, true), $Triangles_TrianglePiece.$ctor(6, 3, true)];
+$Triangles_Shapes.$evenBiggerTriforce = [$Triangles_TrianglePiece.$ctor(4, 0, true), $Triangles_TrianglePiece.$ctor(3, 1, true), $Triangles_TrianglePiece.$ctor(5, 1, true), $Triangles_TrianglePiece.$ctor(2, 2, true), $Triangles_TrianglePiece.$ctor(4, 2, true), $Triangles_TrianglePiece.$ctor(6, 2, true), $Triangles_TrianglePiece.$ctor(1, 3, true), $Triangles_TrianglePiece.$ctor(3, 3, true), $Triangles_TrianglePiece.$ctor(5, 3, true), $Triangles_TrianglePiece.$ctor(7, 3, true), $Triangles_TrianglePiece.$ctor(0, 4, true), $Triangles_TrianglePiece.$ctor(2, 4, true), $Triangles_TrianglePiece.$ctor(4, 4, true), $Triangles_TrianglePiece.$ctor(6, 4, true), $Triangles_TrianglePiece.$ctor(8, 4, true)];
+$Triangles_Shapes.$shapes = [];
+$Triangles_Shapes.$shapes.add($Triangles_Shapes.$triforce);
+$Triangles_Shapes.$shapes.add($Triangles_Shapes.$bigTriforce);
+$Triangles_Shapes.$shapes.add($Triangles_Shapes.$biggerTriforce);
+$Triangles_Shapes.$shapes.add($Triangles_Shapes.$evenBiggerTriforce);
+$Triangles_Shapes.$shapes.add($Triangles_Shapes.$circle);
+$Triangles_Shapes.$shapes.add($Triangles_Utility_Extensions.inverse($Triangles_Shapes.$circle));
+var uShapes = [];
+for (var $t1 = 0; $t1 < $Triangles_Shapes.$shapes.length; $t1++) {
+	var trianglePiecese = $Triangles_Shapes.$shapes[$t1];
+	uShapes.add($Triangles_Utility_Extensions.upsideDown(trianglePiecese));
+}
+$Triangles_Shapes.$shapes.addRange(uShapes);
+$Triangles_Shapes.$shapes.sort(function(a, b) {
+	return ((b.length > a.length) ? 1 : ((b.length < a.length) ? -1 : 0));
+});
+$Triangles_Triangle.muliplyer = 0.6;
+$Triangles_Triangle.triangleLength = 60;
 $Triangles_Triangle.$pointUpNeighbors = [$Triangles_Utility_Point.$ctor(-1, 0), $Triangles_Utility_Point.$ctor(1, 0), $Triangles_Utility_Point.$ctor(-2, 0), $Triangles_Utility_Point.$ctor(2, 0), $Triangles_Utility_Point.$ctor(0, -1), $Triangles_Utility_Point.$ctor(-1, -1), $Triangles_Utility_Point.$ctor(1, -1), $Triangles_Utility_Point.$ctor(0, 1), $Triangles_Utility_Point.$ctor(-1, 1), $Triangles_Utility_Point.$ctor(1, 1), $Triangles_Utility_Point.$ctor(-2, 1), $Triangles_Utility_Point.$ctor(2, 1)];
 $Triangles_Triangle.$pointDownNeighbors = [$Triangles_Utility_Point.$ctor(-1, 0), $Triangles_Utility_Point.$ctor(1, 0), $Triangles_Utility_Point.$ctor(-2, 0), $Triangles_Utility_Point.$ctor(2, 0), $Triangles_Utility_Point.$ctor(0, 1), $Triangles_Utility_Point.$ctor(-1, 1), $Triangles_Utility_Point.$ctor(1, 1), $Triangles_Utility_Point.$ctor(0, -1), $Triangles_Utility_Point.$ctor(-1, -1), $Triangles_Utility_Point.$ctor(1, -1), $Triangles_Utility_Point.$ctor(-2, -1), $Triangles_Utility_Point.$ctor(2, -1)];
 $Triangles_Utility_CanvasInformation.$blackPixel = null;
-$Triangles_Utility_Help.colors = ['#FF3700', '#7654FF', '#77FFB6', '#DAc42a', '#Ca2dFA'];
+$Triangles_Utility_Help.colors = ['#FF0000', '#00FF00', '#0000FF', '#880088', '#888800', '#008888'];
 $Triangles_$Program.$main();

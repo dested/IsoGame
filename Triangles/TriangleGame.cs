@@ -7,11 +7,12 @@ namespace Triangles
 {
     internal class TriangleGame
     {
-        private const bool cascade = true;
+        private const bool cascade = false;
+        private const bool rowcascade = true;
         public static Point Offset = new Point(160, 70);
         public static Point Size = new Point(1100, 850);
-        private int boardHeight = 6;
-        private int boardWidth = 13;
+        private int boardHeight = (int) ( 6 / Triangle.muliplyer );
+        private int boardWidth = (int) ( 13 / Triangle.muliplyer );
         private int drawTick;
         private CanvasInformation myCanvas;
         private Triangle myFirstSelected;
@@ -69,14 +70,19 @@ namespace Triangles
                                            } else {
                                                var neighbors = new List<Triangle>();
                                                myFirstSelected = null;
+                                               Triangle goodOne = null;
                                                for (var l = 0; l < myTriangleList.Count; l++) {
                                                    if (myTriangleList[l].inBounds(pointer.X, pointer.Y)) {
-                                                       if (!myTriangleList[l].Neighbors)
-                                                           neighbors = myTriangleList[l].getLikeNeighbors(myTriangleGrid);
+                                                       if (!myTriangleList[l].Neighbors) {
+                                                           goodOne = myTriangleList[l];
+                                                           neighbors = goodOne.getLikeNeighbors(myTriangleGrid);
+                                                       }
                                                    }
 
                                                    myTriangleList[l].Selected = myTriangleList[l].HighlightedNeighbors = myTriangleList[l].Neighbors = false;
                                                }
+
+                                               neighbors = Shapes.FilterToShape(neighbors, goodOne);
 
                                                for (var i = 0; i < neighbors.Count; i++) {
                                                    neighbors[i].Neighbors = true;
@@ -93,13 +99,14 @@ namespace Triangles
                                        });
 
             init();
-            Window.SetInterval(drawBoard, 1000 / 30);
+            Window.SetInterval(drawBoard, 1000 / 60);
         }
 
         private void popNeighborTriangles(Triangle center)
         {
             var toPop = center.getLikeNeighbors(myTriangleGrid);
 
+            toPop = Shapes.FilterToShape(toPop, center);
             foreach (var triangle in toPop) {
                 myTriangleGrid[triangle.X][triangle.Y].Pop();
             }
@@ -107,7 +114,7 @@ namespace Triangles
 
         private void dropTriangles()
         {
-            if (drawTick % 1 != 0) return;
+            if (drawTick % 3 != 0) return;
 
             List<TriangleMove> moves = new List<TriangleMove>();
             bool didPointUp = false;
@@ -117,6 +124,7 @@ namespace Triangles
                 bool noMoves = true;
 
                 for (int y = boardHeight - 1; y >= 0; y--) {
+                    bool poppedThisRow = false;
                     for (int x = 0; x < boardWidth; x++) {
                         var current = myTriangleGrid[x][y];
                         if (current.Color == null && current.transitioning == 0) {
@@ -137,7 +145,7 @@ namespace Triangles
                                         current.TransitionTo(neighbor.Color);
                                         neighbor.Color = null;
                                         noMoves = false;
-
+                                        poppedThisRow = true;
                                         if (cascade)
                                             return;
                                         break;
@@ -146,6 +154,8 @@ namespace Triangles
                                     current.TransitionTo(neighbor.Color);
                                     neighbor.Color = null;
                                     noMoves = false;
+                                    poppedThisRow = true;
+
                                     if (cascade)
                                         return;
 
@@ -161,6 +171,8 @@ namespace Triangles
                             }
                         }
                     }
+                    if (poppedThisRow && rowcascade)
+                        return;
                 }
                 if (noMoves && didPointUp) break;
                 didPointUp = true;
@@ -204,29 +216,8 @@ namespace Triangles
 
             myCanvas.Context.Translate(Offset.X, Offset.Y);
 
-            var specials = new List<Triangle>();
-            var specials2 = new List<Triangle>();
-            var specials3 = new List<Triangle>();
-
             for (int l = 0; l < myTriangleList.Count; l++) {
-                if (myTriangleList[l].Selected || myTriangleList[l].Neighbors)
-                    specials.Add(myTriangleList[l]);
-                else if (myTriangleList[l].Glow) specials3.Add(myTriangleList[l]);
-                if (myTriangleList[l].HighlightedNeighbors)
-                    specials2.Add(myTriangleList[l]);
-
-                else myTriangleList[l].Draw(myCanvas.Context);
-            }
-
-            //drawing happens sequentially, and it will draw over our highlight, so we draw those last.
-            for (int l = 0; l < specials2.Count; l++) {
-                specials2[l].Draw(myCanvas.Context);
-            }
-            for (int l = 0; l < specials.Count; l++) {
-                specials[l].Draw(myCanvas.Context);
-            }
-            for (int l = 0; l < specials3.Count; l++) {
-                specials3[l].Draw(myCanvas.Context);
+                myTriangleList[l].Draw(myCanvas.Context);
             }
 
             myCanvas.Context.Restore();

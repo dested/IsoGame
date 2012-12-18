@@ -1,12 +1,150 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Html.Media.Graphics;
 using System.Runtime.CompilerServices;
 using Triangles.Utility;
 namespace Triangles
 {
+    public static class Shapes
+    {
+        private static TrianglePiece[] Triforce = {
+                                                          new TrianglePiece(1, 0, true),
+                                                          new TrianglePiece(0, 1, true),
+                                                          new TrianglePiece(2, 1, true),
+                                                  };
+
+
+        private static TrianglePiece[] Circle = {
+                                                          new TrianglePiece(0, 0, true),
+                                                          new TrianglePiece(1, 0, false),
+                                                          new TrianglePiece(2, 0, true),
+
+                                                          new TrianglePiece(0, 1, false),
+                                                          new TrianglePiece(1, 1, true),
+                                                          new TrianglePiece(2, 1, false),
+};
+
+        private static TrianglePiece[] BigTriforce = {
+                                                          new TrianglePiece(2, 0, true),
+                                                          
+                                                          new TrianglePiece(1, 1, true),
+                                                          new TrianglePiece(3, 1, true),
+                                                          
+                                                          new TrianglePiece(0, 2, true),
+                                                          new TrianglePiece(2, 2, true),
+                                                          new TrianglePiece(4, 2, true),
+                                                  };
+
+        private static TrianglePiece[] BiggerTriforce = {
+                                                          new TrianglePiece(3, 0, true),
+                                                          
+                                                          new TrianglePiece(2, 1, true),
+                                                          new TrianglePiece(4, 1, true),
+
+                                                          new TrianglePiece(1, 2, true),
+                                                          new TrianglePiece(3, 2, true),
+                                                          new TrianglePiece(5, 2, true),
+
+                                                          new TrianglePiece(0, 3, true),
+                                                          new TrianglePiece(2, 3, true),
+                                                          new TrianglePiece(4, 3, true),
+                                                          new TrianglePiece(6, 3, true),
+                                                  };
+        private static TrianglePiece[] EvenBiggerTriforce = {
+                                                          new TrianglePiece(4, 0, true),
+                                                          
+                                                          new TrianglePiece(3, 1, true),
+                                                          new TrianglePiece(5, 1, true),
+
+                                                          new TrianglePiece(2, 2, true),
+                                                          new TrianglePiece(4, 2, true),
+                                                          new TrianglePiece(6, 2, true),
+
+                                                          new TrianglePiece(1, 3, true),
+                                                          new TrianglePiece(3, 3, true),
+                                                          new TrianglePiece(5, 3, true),
+                                                          new TrianglePiece(7, 3, true),
+
+                                                          new TrianglePiece(0, 4, true),
+                                                          new TrianglePiece(2, 4, true),
+                                                          new TrianglePiece(4, 4, true),
+                                                          new TrianglePiece(6, 4, true),
+                                                          new TrianglePiece(8, 4, true),
+                                                  };
+        private static List<TrianglePiece[]> shapes = new List<TrianglePiece[]>();
+
+        static Shapes()
+        {
+            shapes.Add(Triforce);
+            shapes.Add(BigTriforce);
+            shapes.Add(BiggerTriforce);
+            shapes.Add(EvenBiggerTriforce);
+            shapes.Add(Circle);
+            shapes.Add(Circle.Inverse());
+
+            var uShapes = new List<TrianglePiece[]>();
+            foreach (var trianglePiecese in shapes) {
+                uShapes.Add(trianglePiecese.UpsideDown());
+            }
+            shapes.AddRange(uShapes);
+            shapes.Sort((a, b) =>
+                        b.Length > a.Length ? 1 : b.Length < a.Length ? -1 : 0
+                    );
+        }
+
+        public static List<Triangle> FilterToShape(List<Triangle> neighbors, Triangle goodOne)
+        {
+            
+            foreach (var trianglePiecese in shapes) {
+                foreach (var trianglePiece in trianglePiecese) {
+                    var startX = trianglePiece.X; //0
+                    var startY = trianglePiece.Y; //1
+
+                    List<Triangle> perfectTriangles = new List<Triangle>();
+                    perfectTriangles.Add(goodOne);
+                    foreach (var piece in trianglePiecese) {
+                        if (piece != trianglePiece) {
+                            foreach (var neighbor in neighbors) {
+                                //          6           6
+                                var nX = neighbor.X - goodOne.X;
+                                //          7           6
+                                var nY = neighbor.Y - goodOne.Y;
+
+                                //  0             1          1             1
+                                if (nX + startX == piece.X && nY + startY == piece.Y && piece.PointUp == neighbor.PointUp) {
+                                    perfectTriangles.Add(neighbor);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (perfectTriangles.Count == trianglePiecese.Length) {
+                        //good
+                        return perfectTriangles;
+                    }
+                }
+            }
+            return new List<Triangle>();
+        }
+    }
+    [Serializable]
+    public class TrianglePiece
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public bool PointUp { get; set; }
+
+        public TrianglePiece(int x, int y, bool pointUp)
+        {
+            X = x;
+            Y = y;
+            PointUp = pointUp;
+        }
+    }
     public class Triangle
     {
-        private const int TriangleLength = 100;
+        public const double muliplyer = 0.6;
+        public const int TriangleLength = (int) ( 100 * muliplyer );
         private static readonly Point[] PointUpNeighbors = new Point[] {
                                                                                new Point(-1, +0),
                                                                                new Point(+1, +0),
@@ -35,7 +173,7 @@ namespace Triangles
                                                                         new Point(-2, -1),
                                                                         new Point(+2, -1)
                                                                 };
-        private int spacing = 32;
+        private int spacing = (int) ( 32 * muliplyer );
         private string transitionToColor;
         public int transitioning;
         [IntrinsicProperty]
@@ -146,12 +284,13 @@ namespace Triangles
 
         public string GetCurrentColor()
         {
-            if (transitioning + 10 >= 100) {
+            var increase = 15;
+            if (transitioning + increase >= 100) {
                 Color = transitionToColor;
                 transitioning = 0;
             }
 
-            if (transitioning > 0) return Help.getColor(Color, transitionToColor, transitioning += 5);
+            if (transitioning > 0) return Help.getColor(Color, transitionToColor, transitioning += increase);
 
             return Color;
         }
@@ -221,12 +360,17 @@ namespace Triangles
                     if (Glow) _context.LineWidth = 5;
                     else if (HighlightedNeighbors) {
                         _context.StrokeStyle = "#FcFcFc";
-                        _context.LineWidth = 6;
+                        _context.LineWidth = 4;
                     } else _context.LineWidth = 2;
                 }
             }
 
-            _context.FillStyle = GetCurrentColor();
+            var currentColor = GetCurrentColor();
+            if (currentColor == null) {
+                _context.Restore();
+                return;
+            }
+            _context.FillStyle = currentColor;
             if (PointUp) {
                 var x = ( X ) / 2.0;
                 var y = Y;

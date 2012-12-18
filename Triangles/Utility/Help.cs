@@ -5,7 +5,7 @@ namespace Triangles.Utility
 {
     public static class Help
     {
-        public static string[] colors = {"#FF3700", "#7654FF", "#77FFB6", "#DAc42a", "#Ca2dFA"};
+        public static string[] colors = {"#FF0000", "#00FF00", "#0000FF", "#880088", "#888800", "#008888"};
 
         public static string getColor(string _start, string _end, int _percent)
         {
