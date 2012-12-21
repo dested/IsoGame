@@ -3,6 +3,8 @@
 var $Triangles_$Program = function() {
 };
 $Triangles_$Program.$main = function() {
+	var raph = Raphael('canvas', 12, 12);
+	raph.clear();
 	$(function() {
 		new $Triangles_$TriangleGame();
 	});
@@ -17,6 +19,7 @@ var $Triangles_$TriangleGame = function() {
 	this.$myFirstSelected = null;
 	this.$myTriangleGrid = null;
 	this.$myTriangleList = null;
+	this.$mousePoint = $Triangles_Utility_Pointer.$ctor(0, 0, 0, false);
 	this.$myCanvas = $Triangles_Utility_CanvasInformation.create$1(document.getElementById('cnvGameBoard'), $Triangles_$TriangleGame.$size.x, $Triangles_$TriangleGame.$size.y);
 	this.$myCanvas.context.lineCap = 'round';
 	this.$myCanvas.context.lineJoin = 'round';
@@ -62,6 +65,9 @@ var $Triangles_$TriangleGame = function() {
 					}
 				}
 			}
+			else {
+				this.$myFirstSelected = null;
+			}
 		}
 		else {
 			var neighbors = [];
@@ -84,6 +90,7 @@ var $Triangles_$TriangleGame = function() {
 	}));
 	this.$myCanvas.jCanvas.mousemove(Function.mkdel(this, function(e1) {
 		var pointer1 = $Triangles_Utility_Help.getCursorPosition(this.$myCanvas.canvas, e1);
+		this.$mousePoint = pointer1;
 		for (var l2 = 0; l2 < this.$myTriangleList.length; l2++) {
 			this.$myTriangleList[l2].glow = false;
 			if (this.$myTriangleList[l2].inBounds(pointer1.x, pointer1.y)) {
@@ -201,7 +208,7 @@ $Triangles_$TriangleGame.prototype = {
 		this.$myCanvas.context.restore();
 		this.$myCanvas.context.translate($Triangles_$TriangleGame.$offset.x, $Triangles_$TriangleGame.$offset.y);
 		for (var l = 0; l < this.$myTriangleList.length; l++) {
-			this.$myTriangleList[l].draw(this.$myCanvas.context);
+			this.$myTriangleList[l].draw(this.$myCanvas.context, this.$mousePoint.x, this.$mousePoint.y);
 		}
 		this.$myCanvas.context.restore();
 	}
@@ -369,7 +376,7 @@ $Triangles_Triangle.prototype = {
 		this.$transitionToColor = _toColor;
 		this.transitioning = 1;
 	},
-	draw: function(_context) {
+	draw: function(_context, mouseX, mouseY) {
 		_context.save();
 		_context.beginPath();
 		//worst code
@@ -406,6 +413,10 @@ $Triangles_Triangle.prototype = {
 			_context.restore();
 			return;
 		}
+		_context.shadowColor = 'black';
+		_context.shadowBlur = 20;
+		_context.shadowOffsetX = (mouseX - $Triangles_$TriangleGame.$offset.x - $Triangles_$TriangleGame.$size.x / 2) / 60 / 2 * 5;
+		_context.shadowOffsetY = (mouseY - $Triangles_$TriangleGame.$offset.y - $Triangles_$TriangleGame.$size.y / 2) / 60 * 5;
 		_context.fillStyle = currentColor;
 		if (this.pointUp) {
 			var x = this.x / 2;

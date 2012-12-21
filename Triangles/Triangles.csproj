@@ -51,6 +51,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Raphael.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Triangle.cs" />
     <Compile Include="TriangleGame.cs" />

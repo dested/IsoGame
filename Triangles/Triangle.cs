@@ -340,7 +340,7 @@ namespace Triangles
             transitioning = 1;
         }
 
-        public void Draw(CanvasContext2D _context)
+        public void Draw(CanvasContext2D _context,int mouseX, int mouseY)
         {
             _context.Save();
             _context.BeginPath();
@@ -370,6 +370,11 @@ namespace Triangles
                 _context.Restore();
                 return;
             }
+  _context.ShadowColor ="black";
+  _context.ShadowBlur = 20;
+  _context.ShadowOffsetX = ((mouseX - TriangleGame.Offset.X - TriangleGame.Size.X / 2.0) / TriangleLength / 2)*5;
+  _context.ShadowOffsetY = ((mouseY - TriangleGame.Offset.Y - TriangleGame.Size.Y / 2.0) / TriangleLength)*5;
+
             _context.FillStyle = currentColor;
             if (PointUp) {
                 var x = ( X ) / 2.0;

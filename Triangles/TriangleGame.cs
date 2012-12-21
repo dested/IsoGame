@@ -18,6 +18,7 @@ namespace Triangles
         private Triangle myFirstSelected;
         private Triangle[][] myTriangleGrid;
         private List<Triangle> myTriangleList;
+        private Pointer mousePoint=new Pointer(0,0);
 
         public TriangleGame()
         {
@@ -66,6 +67,8 @@ namespace Triangles
                                                            myFirstSelected = null;
                                                        }
                                                    }
+                                               } else {
+                                                   myFirstSelected = null;
                                                }
                                            } else {
                                                var neighbors = new List<Triangle>();
@@ -91,7 +94,8 @@ namespace Triangles
                                        });
             myCanvas.JCanvas.MouseMove(e => {
                                            var pointer = Help.GetCursorPosition(myCanvas.Canvas, e);
-
+                                           
+                mousePoint = pointer;
                                            for (var l = 0; l < myTriangleList.Count; l++) {
                                                myTriangleList[l].Glow = false;
                                                if (myTriangleList[l].inBounds(pointer.X, pointer.Y)) myTriangleList[l].Glow = true;
@@ -217,7 +221,7 @@ namespace Triangles
             myCanvas.Context.Translate(Offset.X, Offset.Y);
 
             for (int l = 0; l < myTriangleList.Count; l++) {
-                myTriangleList[l].Draw(myCanvas.Context);
+                myTriangleList[l].Draw(myCanvas.Context,mousePoint.X,mousePoint.Y);
             }
 
             myCanvas.Context.Restore();
