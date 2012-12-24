@@ -33,23 +33,10 @@ namespace Triangles.Utility
             return ( "#" + dec2Hex(r) + dec2Hex(g) + dec2Hex(b) );
         }
 
-        public static Pointer GetCursorPosition(Element element, jQueryEvent ev)
+        public static Pointer GetCursorPosition( ElementEvent ev)
         {
             if (ev.Me().originalEvent && ev.Me().originalEvent.targetTouches && ev.Me().originalEvent.targetTouches.length > 0) ev = ev.Me().originalEvent.targetTouches[0];
-
-            var offsetX = 0;
-            var offsetY = 0;
-
-            if (element.OffsetParent != null) {
-                do {
-                    offsetX += element.OffsetLeft;
-                    offsetY += element.OffsetTop;
-                } while (( element = element.OffsetParent ) != null);
-            }
-
-            if (ev.PageX.Me() != null && ev.PageY.Me() != null)
-                return new Pointer(ev.PageX - offsetX, ev.PageY - offsetY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
-            return new Pointer(ev.ClientX - offsetX, ev.ClientY - offsetY, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Which == 3);
+            return new Pointer(0, 0, ev.Me().wheelDelta ? ev.Me().wheelDelta / 40 : ev.Me().detail ? -ev.Me().detail : 0, ev.Button== 2);
         }
 
         public static string GetRandomColor()

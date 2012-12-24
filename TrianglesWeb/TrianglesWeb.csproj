@@ -53,7 +53,8 @@
   <ItemGroup>
     <Content Include="CompiledScripts\Triangles.js" />
     <Content Include="Global.asax" />
-    <Content Include="Index.aspx" />
+    <Content Include="index.html" />
+    <Content Include="Scripts\raphael-min.js" />
     <Content Include="Scripts\jquery-1.4.1-vsdoc.js" />
     <Content Include="Scripts\jquery-1.4.1.js" />
     <Content Include="Scripts\jquery-1.4.1.min.js" />

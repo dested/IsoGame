@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Html;
 using System.Runtime.CompilerServices;
 namespace Triangles.Utility
 {
@@ -11,23 +12,32 @@ namespace Triangles.Utility
             return o;
         }
 
+        public static void AddEvent(this Element element, string eventName, ElementEventListener listener)
+        {
+            if (element.Me().addEventListener != null) {
+                element.AddEventListener(eventName, listener, false);
+            } else {
+                element.AttachEvent(eventName,() => listener(Window.Event));
+            }
+
+        }
+
         public static TrianglePiece[] UpsideDown(this TrianglePiece[] items)
         {
             List<TrianglePiece> pieces = new List<TrianglePiece>();
             int highest = 0;
-            foreach (var trianglePiece in items)
-            {
+            foreach (var trianglePiece in items) {
                 if (trianglePiece.Y > highest)
                     highest = trianglePiece.Y;
             }
 
-            foreach (var trianglePiece in items)
-            {
+            foreach (var trianglePiece in items) {
                 pieces.Add(new TrianglePiece(trianglePiece.X, highest - trianglePiece.Y, !trianglePiece.PointUp));
             }
 
             return pieces.Array();
         }
+
         public static TrianglePiece[] Inverse(this TrianglePiece[] items)
         {
             List<TrianglePiece> pieces = new List<TrianglePiece>();

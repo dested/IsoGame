@@ -367,14 +367,14 @@ namespace Triangles
             return default( RaphaelFont );
         }
 
-        public RaphaelPathElement Path(string pathString)
+        public RaphaelElement Path(string pathString)
         {
-            return default( RaphaelPathElement );
+            return default( RaphaelElement );
         }
 
-        public RaphaelPathElement Print(float x, float y, string @string, RaphaelFont font, float size = 16, string origin = "middle", float letter_spacing = 0)
+        public RaphaelElement Print(float x, float y, string @string, RaphaelFont font, float size = 16, string origin = "middle", float letter_spacing = 0)
         {
-            return default( RaphaelPathElement );
+            return default( RaphaelElement );
         }
 
         public RaphaelElement Rect(float x, float y, float width, float height, float radius = 0)
@@ -529,9 +529,6 @@ namespace Triangles
         Round,
         Miter
     }
-    [IgnoreNamespace]
-    [Imported(IsRealType = true)]
-    public class RaphaelPathElement : RaphaelElement {}
     [IgnoreNamespace]
     [Imported(IsRealType = true)]
     public class RaphaelFont {}
