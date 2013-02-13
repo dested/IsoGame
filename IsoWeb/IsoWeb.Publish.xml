@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<publishData>
+  <publishProfile publishUrl="ftp://dested.com/httpdocs/Iso" deleteExistingFiles="False" ftpAnonymousLogin="False" ftpPassiveMode="True" msdeploySite="" msdeploySiteID="" msdeployRemoteSitePhysicalPath="" msdeployAllowUntrustedCertificate="False" msdeploySkipExtraFilesOnServer="True" msdeployMarkAsApp="False" profileName="Profile1" publishMethod="FTP" replaceMatchingFiles="True" userName="dested" savePWD="True" userPWD="AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAATB4UTtkp4kKCbP1tNiogvwAAAAACAAAAAAAQZgAAAAEAACAAAABmEMsC7DYvpte6MiuD46b/ean/PiKAT9c+jZpSxwWTSQAAAAAOgAAAAAIAACAAAAAFwYMzIWkzrk0QZS6bublodTRrvLwmLEa+iu6F4ONDlRAAAABt0Z/M59oqfp8J1J97SbCBQAAAANDbiv/7RO0lIayrKFoTCysSfIYsY7Vsgnlr02M6Emml61WY7q3tyaaEa3qCD/EOOoB/EG7z/5OPVAi5EahAbJQ=" SelectedForPublish="True">
+    <file relUrl="Web.config" publishTime="12/16/2012 14:00:45" />
+    <file relUrl="bin/IsoWeb.pdb" publishTime="02/12/2013 02:02:49" />
+    <file relUrl="Scripts/mscorlib.js" publishTime="12/15/2012 23:20:37" />
+    <file relUrl="Scripts/keyboardjs.js" publishTime="02/12/2013 01:36:45" />
+    <file relUrl="Scripts/Stats.js" publishTime="02/12/2013 02:02:20" />
+    <file relUrl="Scripts/mscorlib.min.js" publishTime="12/15/2012 23:20:37" />
+    <file relUrl="Scripts/jquery-1.4.1.js" publishTime="12/15/2012 23:24:24" />
+    <file relUrl="CompiledScripts/Iso.js" publishTime="02/12/2013 17:01:03" />
+    <file relUrl="Scripts/raphael-min.js" publishTime="12/23/2012 14:27:59" />
+    <file relUrl="Global.asax" publishTime="12/15/2012 23:24:24" />
+    <file relUrl="index.html" publishTime="02/12/2013 02:16:51" />
+    <file relUrl="Scripts/jquery-1.4.1-vsdoc.js" publishTime="12/15/2012 23:24:24" />
+    <file relUrl="bin/IsoWeb.dll" publishTime="02/12/2013 02:02:49" />
+    <file relUrl="Scripts/jquery-1.4.1.min.js" publishTime="12/15/2012 23:24:24" />
+  </publishProfile>
+</publishData>
